@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.JWT_REFRESH_EXPIRATION = exports.JWT_REFRESH_SECRET = exports.PORT = exports.DB_URI = exports.JWT_EXPIRES_IN = exports.SALT = exports.SERVER_SECRET = void 0;
+var dotenv_1 = require("dotenv");
+dotenv_1.default.config({ path: "../.env" });
+exports.SERVER_SECRET = process.env.JWT_SECRET || "";
+exports.SALT = parseInt(process.env.SALT || "10", 10);
+exports.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "";
+exports.DB_URI = process.env.DB_URI || "";
+exports.PORT = process.env.PORT || "";
+exports.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "";
+exports.JWT_REFRESH_EXPIRATION = process.env.JWT_REFRESH_EXPIRATION || "";

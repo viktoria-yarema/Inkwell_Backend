@@ -1,0 +1,24 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var express_1 = require("express");
+var cors_1 = require("cors");
+var body_parser_1 = require("body-parser");
+var db_1 = require("./configs/db");
+var authRoutes_1 = require("./routes/authRoutes");
+var error_1 = require("./middlewares/error");
+var limiter_1 = require("./middlewares/limiter");
+var env_1 = require("./utils/env");
+var articleRoutes_1 = require("./routes/articleRoutes");
+var app = (0, express_1.default)();
+(0, db_1.default)();
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+app.use("*", body_parser_1.default.json());
+app.use(body_parser_1.default.urlencoded({ extended: true }));
+app.use(error_1.default);
+app.set("trust proxy", "loopback, linklocal, uniquelocal");
+app.use(limiter_1.limiter);
+// routers connection
+app.use("/api/", authRoutes_1.default);
+app.use("/api/articles", articleRoutes_1.default);
+app.listen(env_1.PORT, function () { return console.log("Server is running", env_1.PORT); });
