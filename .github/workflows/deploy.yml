@@ -40,9 +40,6 @@ jobs:
         run: |
           zip -r ${{ env.EB_DEPLOYMENT_PACKAGE }} ./build package.json yarn.lock .ebextensions .platform node_modules
 
-      - name: Set Version Label
-        run: echo "VERSION_LABEL=ver-${{ github.run_number }}-${{ github.sha }}" >> $GITHUB_ENV
-
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v21
         with:
