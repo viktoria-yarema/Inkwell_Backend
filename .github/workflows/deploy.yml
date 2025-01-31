@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 env:
-  AWS_REGION: us-east-1 
+  AWS_REGION: eu-central-1 
   EB_ENVIRONMENT_NAME: inkwell-server-env 
   EB_APPLICATION_NAME: inkwell-server
   EB_DEPLOYMENT_PACKAGE: deploy.zip
