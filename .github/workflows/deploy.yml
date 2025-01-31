@@ -51,3 +51,4 @@ jobs:
           region: ${{ env.AWS_REGION }}
           deployment_package: ${{ env.EB_DEPLOYMENT_PACKAGE }}
           wait_for_deployment: true 
+          existing_bucket_name: "elasticbeanstalk-deployments-inkwell"
