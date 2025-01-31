@@ -43,15 +43,6 @@ jobs:
       - name: Set Version Label
         run: echo "VERSION_LABEL=ver-${{ github.run_number }}-${{ github.sha }}" >> $GITHUB_ENV
 
-      - name: Delete Existing Version (If Exists)
-        continue-on-error: true
-        run: |
-          aws elasticbeanstalk delete-application-version \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --version-label ${{ env.VERSION_LABEL }} \
-            --region ${{ env.AWS_REGION }} \
-            --delete-source-bundle || true
-
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v21
         with:
