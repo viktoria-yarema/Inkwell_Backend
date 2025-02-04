@@ -64,12 +64,16 @@ jobs:
             --region ${{ env.AWS_REGION }} \
             --delete-source-bundle || true
 
+      - name: Upload to S3
+        run: |
+          aws s3 cp ${{ env.EB_DEPLOYMENT_PACKAGE }} s3://elasticbeanstalk-deployments-inkwell/inkwell-server/${{ env.EB_DEPLOYMENT_PACKAGE }}
+
       - name: Create Application Version
         run: |
           aws elasticbeanstalk create-application-version \
             --application-name ${{ env.EB_APPLICATION_NAME }} \
             --version-label "ver-${{ github.run_number }}-${{ github.sha }}" \
-            --source-bundle S3Bucket="elasticbeanstalk-deployments-inkwell",S3Key="${{ env.EB_DEPLOYMENT_PACKAGE }}" \
+            --source-bundle S3Bucket="elasticbeanstalk-deployments-inkwell",S3Key="inkwell-server/${{ env.EB_DEPLOYMENT_PACKAGE }}" \
             --region ${{ env.AWS_REGION }}
 
       - name: Deploy to EB
