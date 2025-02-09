@@ -42,7 +42,6 @@ jobs:
           zip -r ${{ env.EB_DEPLOYMENT_PACKAGE }} ./build package.json yarn.lock .ebextensions .platform node_modules
           ls -lh ${{ env.EB_DEPLOYMENT_PACKAGE }} 
 
-      # Set the version label before deployment
       - name: Set Version Label
         id: set_version_label
         run: |
@@ -54,7 +53,6 @@ jobs:
         run: |
           echo "Version Label is: ${{ env.VERSION_LABEL }}"
 
-      # Add these steps before Deploy to EB
       - name: Delete Existing Version (If Exists)
         continue-on-error: true
         run: |
