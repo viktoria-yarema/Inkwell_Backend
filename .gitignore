@@ -100,5 +100,3 @@ extensions/*
 *-service-account.json
 
 deploy.zip
-
-scripts/
