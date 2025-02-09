@@ -50,7 +50,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(201).json({ token, refreshToken });
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error while registration");
+    res.status(500).send({ message: "Server error while registration", error: err.message });
   }
 };
 
