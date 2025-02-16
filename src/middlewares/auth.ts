@@ -14,8 +14,8 @@ const auth = async (req: AuthenticatedRequest, res: Response, next: NextFunction
       return;
     }
 
-    // Check if the token is blacklisted
     const blacklistedToken = await TokenBlacklist.findOne({ token });
+    
     if (blacklistedToken) {
       res.status(401).json({ message: "Token is invalid" });
       return;

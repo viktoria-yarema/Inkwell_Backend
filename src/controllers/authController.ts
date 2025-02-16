@@ -87,7 +87,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: false, 
-      sameSite: "strict",
+      sameSite: "none",
     });
 
     res.status(201).json({ token });
@@ -121,7 +121,7 @@ export const refreshAccessToken = async (req: AuthenticatedRequest, res: Respons
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       secure: false,
-      sameSite: "strict",
+      sameSite: "none",
     });
 
     res.json({ token: newAccessToken });
@@ -147,12 +147,11 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
     const decodedRefreshToken = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as { exp: number };
     const refreshTokenExpiresAt = new Date(decodedRefreshToken.exp * 1000);
     await new TokenBlacklist({ token: refreshToken, expiresAt: refreshTokenExpiresAt }).save();
-
   
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: false,
-      sameSite: "strict",
+      sameSite: "none",
     });
 
     res.status(200).json({ message: "Logged out successfully" });

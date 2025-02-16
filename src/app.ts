@@ -12,6 +12,7 @@ import cookieParser from "cookie-parser";
 const app = express();
 connectDB();
 app.use(cookieParser());
+
 // Configure CORS options
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
