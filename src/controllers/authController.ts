@@ -85,7 +85,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const refreshToken = generateRefreshToken(user._id);
 
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: false,
+      httpOnly: true,
       secure: false, 
       sameSite: "none",
     });
