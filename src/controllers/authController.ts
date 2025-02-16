@@ -9,6 +9,8 @@ import { validationResult } from "express-validator";
 import User from "../models/User";
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../types/auth";
+import TokenBlacklist from "../models/TokenBlacklist";
+
 
 const generateToken = (id: string): string => {
   const options: SignOptions = { expiresIn: Number(JWT_EXPIRES_IN) };
@@ -81,7 +83,14 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
     const token = generateToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
-    res.status(201).json({ token, refreshToken });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true, 
+      sameSite: "strict",
+    });
+
+    res.status(201).json({ token });
   } catch (err: any) {
     console.error(err.message);
     res.status(500).send("Server error");
@@ -89,7 +98,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const refreshAccessToken = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { refreshToken } = req.body;
+  const { refreshToken } = req.cookies.refreshToken;
 
   if (!refreshToken) {
     res.status(403).json({ message: "Refresh token required" });
@@ -109,9 +118,43 @@ export const refreshAccessToken = async (req: AuthenticatedRequest, res: Respons
     const newAccessToken = generateToken(user._id);
     const newRefreshToken = generateRefreshToken(user._id);
 
+ 
+
     res.json({ token: newAccessToken, refreshToken: newRefreshToken });
   } catch (err: any) {
     res.status(403).json({ message: "Invalid refresh token" });
+  }
+};
+
+export const logoutUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const accessToken = req.header("Authorization")?.replace("Bearer ", "");
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!accessToken || !refreshToken) {
+      res.status(400).json({ message: "Access and refresh tokens are required" });
+      return;
+    }
+
+    const decodedAccessToken = jwt.verify(accessToken, SERVER_SECRET) as { exp: number };
+    const accessTokenExpiresAt = new Date(decodedAccessToken.exp * 1000);
+    await new TokenBlacklist({ token: accessToken, expiresAt: accessTokenExpiresAt }).save();
+
+    const decodedRefreshToken = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as { exp: number };
+    const refreshTokenExpiresAt = new Date(decodedRefreshToken.exp * 1000);
+    await new TokenBlacklist({ token: refreshToken, expiresAt: refreshTokenExpiresAt }).save();
+
+  
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

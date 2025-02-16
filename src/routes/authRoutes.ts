@@ -5,6 +5,7 @@ import {
   registerUser,
   loginUser,
   refreshAccessToken,
+  logoutUser,
 } from "../controllers/authController";
 import auth from "../middlewares/auth";
 
@@ -31,6 +32,8 @@ router.post(
 );
 
 router.post("/refresh-token", auth, refreshAccessToken);
+
+router.post("/logout", auth, logoutUser);
 
 const authRoutes = router;
 
