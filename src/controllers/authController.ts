@@ -135,8 +135,13 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
     const accessToken = req.header("Authorization")?.replace("Bearer ", "");
     const refreshToken = req.cookies.refreshToken;
   
-    if (!accessToken || !refreshToken) {
-      res.status(400).json({ message: "Access and refresh tokens are required" });
+    if (!accessToken ) {
+      res.status(400).json({ message: "Access token is required" });
+      return;
+    }
+
+    if (!refreshToken) {
+      res.status(400).json({ message: "Refresh token is required" });
       return;
     }
 
