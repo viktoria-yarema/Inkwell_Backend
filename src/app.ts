@@ -13,29 +13,15 @@ connectDB();
 
 // Configure CORS options
 const corsOptions = {
-  origin: function (origin: any, callback: any) {
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'];
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('Blocked by CORS:', origin); // Debug which origins are being blocked
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Set-Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  maxAge: 86400,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  maxAge: 86400 
 };
 
-// Important: Place CORS before any other middleware
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); 
 
-// Move other middleware after CORS
 app.use(express.json());
 app.use("*", bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

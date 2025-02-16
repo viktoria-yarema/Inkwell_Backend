@@ -86,7 +86,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true, 
+      secure: false, 
       sameSite: "strict",
     });
 
@@ -147,7 +147,7 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
   
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "strict",
     });
 
