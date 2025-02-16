@@ -93,7 +93,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     res.status(201).json({ token });
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send({ message: "Server error", error: err.message });
   }
 };
 
