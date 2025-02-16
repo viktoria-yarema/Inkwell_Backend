@@ -98,7 +98,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const refreshAccessToken = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { refreshToken } = req.cookies.refreshToken;
+  const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
     res.status(403).json({ message: "Refresh token required" });
@@ -118,9 +118,13 @@ export const refreshAccessToken = async (req: AuthenticatedRequest, res: Respons
     const newAccessToken = generateToken(user._id);
     const newRefreshToken = generateRefreshToken(user._id);
 
- 
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+    });
 
-    res.json({ token: newAccessToken, refreshToken: newRefreshToken });
+    res.json({ token: newAccessToken });
   } catch (err: any) {
     res.status(403).json({ message: "Invalid refresh token" });
   }
@@ -130,7 +134,7 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
   try {
     const accessToken = req.header("Authorization")?.replace("Bearer ", "");
     const refreshToken = req.cookies.refreshToken;
-
+  
     if (!accessToken || !refreshToken) {
       res.status(400).json({ message: "Access and refresh tokens are required" });
       return;
@@ -152,9 +156,9 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
     });
 
     res.status(200).json({ message: "Logged out successfully" });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error" , error: err.message});
   }
 };
 

@@ -7,10 +7,11 @@ import errorHandler from "./middlewares/error";
 import { limiter } from "./middlewares/limiter";
 import { PORT } from "./utils/env";
 import articleRoutes from "./routes/articleRoutes";
+import cookieParser from "cookie-parser";
 
 const app = express();
 connectDB();
-
+app.use(cookieParser());
 // Configure CORS options
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
