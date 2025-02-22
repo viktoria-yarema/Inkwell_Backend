@@ -25,7 +25,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     res.json(article);
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send({ message: "Server error", error: err.message });
   }
 };
 
@@ -36,7 +36,7 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
     res.json(articles);
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send({ message: "Server error", error: err.message });
   }
 };
 
@@ -53,7 +53,7 @@ export const getArticleById = async (req: Request, res: Response): Promise<void>
     res.json(article);
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send({ message: "Server error", error: err.message });
   }
 };
 
@@ -84,7 +84,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     res.json(article);
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send({ message: "Server error", error: err.message });
   }
 };
 
@@ -102,6 +102,6 @@ export const deleteArticle = async (req: Request, res: Response): Promise<void> 
     res.status(200).json({ message: "Article removed" });
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send({ message: "Server error", error: err.message });
   }
 };
