@@ -32,7 +32,8 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
 // Get all articles
 export const getArticles = async (req: Request, res: Response): Promise<void> => {
   try {
-    const articles = await Article.find().populate("authorId", "name").populate("tags", "name");
+    const articles = await Article.find();
+
     res.json(articles);
   } catch (err: any) {
     console.error(err.message);
@@ -43,7 +44,7 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
 // Get a single article by ID
 export const getArticleById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const article = await Article.findById(req.params.id).populate("authorId", "name").populate("tags", "name");
+    const article = await Article.findById(req.params.id);
 
     if (!article) {
       res.status(404).json({ message: "Article not found" });
