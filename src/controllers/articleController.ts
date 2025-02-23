@@ -53,8 +53,7 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
   const authorId = getAuthorIdFromToken(req);
 
   try {
-    const articles = await Article.find({ authorId });
-
+    const articles = await Article.find({ authorId }).lean();
 
     res.json(articles.map(article => ({ id: article._id, ...article })));
   } catch (err: any) {
@@ -68,14 +67,14 @@ export const getArticleById = async (req: Request, res: Response): Promise<void>
   const authorId = getAuthorIdFromToken(req);
 
   try {
-    const article = await Article.findById(req.params.id);
+    const article = await Article.findById(req.params.id).lean();
 
     if (!article) {
       res.status(404).json({ message: "Article not found" });
       return;
     }
 
-    if(article.authorId.toString() !== authorId) {
+    if(article?.authorId?.toString() !== authorId) {
       res.status(403).json({ message: "You are not authorized to access this article" });
       return;
     }
