@@ -31,10 +31,13 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
 
 // Get all articles
 export const getArticles = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const articles = await Article.find();
+  const { authorId } = req.body;
 
-    res.json(articles);
+  try {
+    const articles = await Article.find({ authorId });
+
+
+    res.json(articles.map(article => ({ id: article._id, ...article })));
   } catch (err: any) {
     console.error(err.message);
     res.status(500).send({ message: "Server error", error: err.message });
@@ -43,6 +46,8 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
 
 // Get a single article by ID
 export const getArticleById = async (req: Request, res: Response): Promise<void> => {
+  const { authorId } = req.body;
+
   try {
     const article = await Article.findById(req.params.id);
 
@@ -51,7 +56,12 @@ export const getArticleById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    res.json(article);
+    if(article.authorId.toString() !== authorId) {
+      res.status(403).json({ message: "You are not authorized to access this article" });
+      return;
+    }
+
+    res.json({ id: article._id, ...article });
   } catch (err: any) {
     console.error(err.message);
     res.status(500).send({ message: "Server error", error: err.message });
@@ -82,7 +92,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     article.tags = tags || article.tags;
 
     article = await article.save();
-    res.json(article);
+    res.json({ id: article._id, ...article });
   } catch (err: any) {
     console.error(err.message);
     res.status(500).send({ message: "Server error", error: err.message });
