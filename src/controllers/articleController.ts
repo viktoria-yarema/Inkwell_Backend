@@ -1,6 +1,25 @@
 import { validationResult } from "express-validator";
 import Article from "../models/Article";
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import { SERVER_SECRET } from "../utils/env";
+
+const getAuthorIdFromToken = (req: Request): string | null => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, SERVER_SECRET) as { id: string };
+
+    return decoded.id;
+  } catch (err) {
+    console.error('Token verification failed:', err);
+    return null;
+  }
+};
 
 // Create a new article
 export const createArticle = async (req: Request, res: Response): Promise<void> => {
@@ -31,7 +50,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
 
 // Get all articles
 export const getArticles = async (req: Request, res: Response): Promise<void> => {
-  const { authorId } = req.body;
+  const authorId = getAuthorIdFromToken(req);
 
   try {
     const articles = await Article.find({ authorId });
@@ -46,7 +65,7 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
 
 // Get a single article by ID
 export const getArticleById = async (req: Request, res: Response): Promise<void> => {
-  const { authorId } = req.body;
+  const authorId = getAuthorIdFromToken(req);
 
   try {
     const article = await Article.findById(req.params.id);
