@@ -53,7 +53,9 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
   const authorId = getAuthorIdFromToken(req);
 
   try {
-    const articles = await Article.find({ authorId }).lean();
+    const articles = await Article.find({ authorId })
+      .sort({ updatedAt: -1 })
+      .lean();
 
     res.json(articles.map(article => ({ id: article._id, ...article })));
   } catch (err: any) {
