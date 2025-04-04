@@ -16,7 +16,7 @@ router.get("/", getTags);
 router.get("/:id", getTagById);
 
 router.post(
-  "/",
+  "/create",
   [
     auth,
     check("title", "Title is required").not().isEmpty().trim().escape(),
@@ -25,7 +25,7 @@ router.post(
 );
 
 router.put(
-  "/:id",
+  "/update/:id",
   [
     auth,
     check("title", "Title is required").not().isEmpty().trim().escape(),
@@ -33,6 +33,6 @@ router.put(
   updateTag
 );
 
-router.delete("/:id", auth, deleteTag);
+router.delete("/delete/:id", auth, deleteTag);
 
 export default router; 
