@@ -7,6 +7,7 @@ import errorHandler from "./middlewares/error";
 import { limiter } from "./middlewares/limiter";
 import { PORT } from "./utils/env";
 import articleRoutes from "./routes/articleRoutes";
+import tagRoutes from "./routes/tagRoutes";
 import cookieParser from "cookie-parser";
 
 const app = express();
@@ -34,5 +35,6 @@ app.use(limiter);
 // routers connection
 app.use("/api/", authRoutes);
 app.use("/api/articles", articleRoutes);
+app.use("/api/tags", tagRoutes);
 
 app.listen(PORT, () => console.log("Server is running", PORT));
