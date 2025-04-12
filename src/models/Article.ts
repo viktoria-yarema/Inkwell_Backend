@@ -1,10 +1,5 @@
 import mongoose from "mongoose";
 
-type ArticleTag = {
-  _id: mongoose.Types.ObjectId;
-  title: string;
-}
-
 const Schema = mongoose.Schema;
 
 const ArticleSchema = new Schema(
@@ -29,8 +24,7 @@ const ArticleSchema = new Schema(
     },
     tags: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Tag",
-      select: '_id title',
+      ref: "Tag"
     }],
   },
   {
@@ -38,13 +32,12 @@ const ArticleSchema = new Schema(
   }
 );
 
-
 type Article = mongoose.Document & {
   title: string;
   content: string;
   authorId: mongoose.Types.ObjectId;
   status: "draft" | "published";
-  tags: ArticleTag[];
+  tags: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
