@@ -105,3 +105,39 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 Project Link: [https://github.com/viktoria-yarema/Inkwell_Backend](https://github.com/viktoria-yarema/Inkwell_Backend)
 
+## Google Cloud Storage Setup
+
+To use the image upload functionality with Google Cloud Storage:
+
+1. Create a Google Cloud Storage bucket with the name `inkwell_bucket` (or update the `INKWELL_GOOGLE_STORAGE_BUCKET` environment variable with your bucket URL)
+2. Create a service account with Storage Admin permissions for the bucket
+3. Download the service account key as JSON
+4. Save the key as `google-credentials.json` in the root of the project
+5. Set the following environment variable to point to your credentials file:
+   ```
+   GOOGLE_APPLICATION_CREDENTIALS=./google-credentials.json
+   ```
+
+## API Endpoints for Image Upload
+
+The following endpoints are available for image management:
+
+- `POST /api/images/upload` - Upload a new image (requires authentication)
+  - Request: Multipart form with an `image` field
+  - Optional: `articleId` field to associate with an article
+  - Response: Image metadata including URL
+
+- `GET /api/images` - Get all images for the authenticated user
+  - Response: Array of image metadata
+
+- `DELETE /api/images/:id` - Delete an image by ID
+  - Response: Success message
+
+## Environment Variables
+
+Add this to your .env file:
+
+```
+INKWELL_GOOGLE_STORAGE_BUCKET=https://storage.cloud.google.com/inkwell_bucket/
+```
+

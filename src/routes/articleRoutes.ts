@@ -1,55 +1,46 @@
-import express from "express";
-import { check, query } from "express-validator";
+import express from 'express';
+import { check, query } from 'express-validator';
+
 import {
-  getArticles,
   createArticle,
-  updateArticle,
   deleteArticle,
   getArticleById,
-} from "../controllers/articleController";
-import auth from "../middlewares/auth";
+  getArticles,
+  updateArticle,
+} from '../controllers/articleController';
+import auth from '../middlewares/auth';
 
 const router = express.Router();
 
 router.get(
-  "/",
-  [
-    auth,
-    query("page").isInt({ min: 1 }).optional(),
-    query("limit").isInt({ min: 1 }).optional(),
-  ],
-  getArticles,
+  '/',
+  [auth, query('page').isInt({ min: 1 }).optional(), query('limit').isInt({ min: 1 }).optional()],
+  getArticles
 );
 
-router.get(
-  "/:id",
-  [
-    auth,
-  ],
-  getArticleById,
-);
+router.get('/:id', [auth], getArticleById);
 
 router.post(
-  "/",
+  '/',
   [
     auth,
-    check("title", "Title is required").not().isEmpty().escape(),
-    check("content", "Content is required").not().isEmpty().escape(),
+    check('title', 'Title is required').not().isEmpty().escape(),
+    check('content', 'Content is required').not().isEmpty().escape(),
   ],
-  createArticle,
+  createArticle
 );
 
 router.put(
-  "/:id",
+  '/:id',
   [
     auth,
-    check("title", "Title is required").not().isEmpty().escape(),
-    check("content", "Content is required").not().isEmpty().escape(),
+    check('title', 'Title is required').not().isEmpty().escape(),
+    check('content', 'Content is required').not().isEmpty().escape(),
   ],
-  updateArticle,
+  updateArticle
 );
 
-router.delete("/:id", auth, deleteArticle);
+router.delete('/:id', auth, deleteArticle);
 
 const articleRoutes = router;
 

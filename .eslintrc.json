@@ -1,0 +1,19 @@
+{
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "google", "prettier"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint", "import"],
+  "rules": {
+    "import/order": "off",
+    "no-console": "off",
+    "require-jsdoc": "off",
+    "new-cap": "off"
+  },
+  "ignorePatterns": ["build/", "node_modules/"],
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx}": ["prettier --write", "eslint --fix"]
+  }
+}

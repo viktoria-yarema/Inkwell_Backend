@@ -1,16 +1,15 @@
+import { Request, Response } from 'express';
+import { validationResult } from 'express-validator';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
+import TokenBlacklist from '../models/TokenBlacklist';
+import User from '../models/User';
+import { AuthenticatedRequest } from '../types/auth';
 import {
   JWT_EXPIRES_IN,
-  SERVER_SECRET,
   JWT_REFRESH_EXPIRATION,
   JWT_REFRESH_SECRET,
-} from "../utils/env";
-import jwt, { Secret, SignOptions } from "jsonwebtoken";
-import { validationResult } from "express-validator";
-import User from "../models/User";
-import { Request, Response } from "express";
-import { AuthenticatedRequest } from "../types/auth";
-import TokenBlacklist from "../models/TokenBlacklist";
-
+  SERVER_SECRET,
+} from '../utils/env';
 
 const generateToken = (id: string): string => {
   const options: SignOptions = { expiresIn: Number(JWT_EXPIRES_IN) };
@@ -36,7 +35,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     let user = await User.findOne({ email });
 
     if (user) {
-      res.status(400).json({ message: "User already exists" });
+      res.status(400).json({ message: 'User already exists' });
       return;
     }
 
@@ -52,7 +51,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(201).json({ token, refreshToken });
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send({ message: "Server error while registration", error: err.message });
+    res.status(500).send({ message: 'Server error while registration', error: err.message });
   }
 };
 
@@ -70,38 +69,41 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      res.status(400).json({ message: "Invalid Credentials" });
+      res.status(400).json({ message: 'Invalid Credentials' });
       return;
     }
 
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      res.status(400).json({ message: "Invalid Credentials" });
+      res.status(400).json({ message: 'Invalid Credentials' });
       return;
     }
 
     const token = generateToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
-    res.cookie("refreshToken", refreshToken, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, 
-      sameSite: "none",
+      secure: false,
+      sameSite: 'none',
     });
 
     res.status(201).json({ token });
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send({ message: "Server error", error: err.message });
+    res.status(500).send({ message: 'Server error', error: err.message });
   }
 };
 
-export const refreshAccessToken = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const refreshAccessToken = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    res.status(403).json({ message: "Refresh token required" });
+    res.status(403).json({ message: 'Refresh token required' });
     return;
   }
 
@@ -111,37 +113,37 @@ export const refreshAccessToken = async (req: AuthenticatedRequest, res: Respons
     const user = await User.findById(decoded.id);
 
     if (!user) {
-      res.status(403).json({ message: "Invalid refresh token" });
+      res.status(403).json({ message: 'Invalid refresh token' });
       return;
     }
 
     const newAccessToken = generateToken(user._id);
     const newRefreshToken = generateRefreshToken(user._id);
 
-    res.cookie("refreshToken", newRefreshToken, {
+    res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: false,
-      sameSite: "none",
+      sameSite: 'none',
     });
 
     res.json({ token: newAccessToken });
   } catch (err: any) {
-    res.status(403).json({ message: "Invalid refresh token" });
+    res.status(403).json({ message: 'Invalid refresh token' });
   }
 };
 
 export const logoutUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const accessToken = req.header("Authorization")?.replace("Bearer ", "");
+    const accessToken = req.header('Authorization')?.replace('Bearer ', '');
     const refreshToken = req.cookies.refreshToken;
-  
-    if (!accessToken ) {
-      res.status(400).json({ message: "Access token is required" });
+
+    if (!accessToken) {
+      res.status(400).json({ message: 'Access token is required' });
       return;
     }
 
     if (!refreshToken) {
-      res.status(400).json({ message: "Refresh token is required" });
+      res.status(400).json({ message: 'Refresh token is required' });
       return;
     }
 
@@ -152,32 +154,32 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
     const decodedRefreshToken = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as { exp: number };
     const refreshTokenExpiresAt = new Date(decodedRefreshToken.exp * 1000);
     await new TokenBlacklist({ token: refreshToken, expiresAt: refreshTokenExpiresAt }).save();
-  
-    res.clearCookie("refreshToken", {
+
+    res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: false,
-      sameSite: "none",
+      sameSite: 'none',
     });
 
-    res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ message: 'Logged out successfully' });
   } catch (err: any) {
     console.error(err);
-    res.status(500).json({ message: "Server error" , error: err.message});
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
 export const getUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.id).select("-password");
+    const user = await User.findById(req.user?.id).select('-password');
     const formattedUser = user?.toObject();
 
     if (formattedUser) {
       formattedUser.id = formattedUser._id;
     }
-    
+
     res.json(formattedUser);
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send("Server error");
+    res.status(500).send('Server error');
   }
 };

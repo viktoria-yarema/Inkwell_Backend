@@ -1,39 +1,40 @@
-import express from "express";
-import { check } from "express-validator";
+import express from 'express';
+import { check } from 'express-validator';
+
 import {
   getUser,
-  registerUser,
   loginUser,
-  refreshAccessToken,
   logoutUser,
-} from "../controllers/authController";
-import auth from "../middlewares/auth";
+  refreshAccessToken,
+  registerUser,
+} from '../controllers/authController';
+import auth from '../middlewares/auth';
 
 const router = express.Router();
 
-router.get("/user", auth, getUser);
+router.get('/user', auth, getUser);
 
 router.post(
-  "/register-user",
+  '/register-user',
   [
-    check("email", "Email is required").not().isEmpty().escape(),
-    check("password", "Password is required").not().isEmpty().escape(),
+    check('email', 'Email is required').not().isEmpty().escape(),
+    check('password', 'Password is required').not().isEmpty().escape(),
   ],
-  registerUser,
+  registerUser
 );
 
 router.post(
-  "/login",
+  '/login',
   [
-    check("email", "Email is required").not().isEmpty().escape(),
-    check("password", "Password is required").not().isEmpty().escape(),
+    check('email', 'Email is required').not().isEmpty().escape(),
+    check('password', 'Password is required').not().isEmpty().escape(),
   ],
-  loginUser,
+  loginUser
 );
 
-router.post("/refresh-token", auth, refreshAccessToken);
+router.post('/refresh-token', auth, refreshAccessToken);
 
-router.post("/logout", auth, logoutUser);
+router.post('/logout', auth, logoutUser);
 
 const authRoutes = router;
 

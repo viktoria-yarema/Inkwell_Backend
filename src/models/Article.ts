@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const Schema = mongoose.Schema;
 
@@ -14,18 +14,20 @@ const ArticleSchema = new Schema(
     },
     authorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     status: {
       type: String,
-      enum: ["draft", "published"],
+      enum: ['draft', 'published'],
       required: true,
     },
-    tags: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Tag"
-    }],
+    tags: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tag',
+      },
+    ],
   },
   {
     timestamps: true,
@@ -36,12 +38,12 @@ type Article = mongoose.Document & {
   title: string;
   content: string;
   authorId: mongoose.Types.ObjectId;
-  status: "draft" | "published";
+  status: 'draft' | 'published';
   tags: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-const Article = mongoose.model<Article>("Article", ArticleSchema);
+const Article = mongoose.model<Article>('Article', ArticleSchema);
 
-export default Article; 
+export default Article;
