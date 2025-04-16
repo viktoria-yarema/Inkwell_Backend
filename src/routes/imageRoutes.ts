@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(auth);
 
 // Upload a new image
-router.post('/upload', upload.single('image'), uploadImage);
+router.post('/upload', upload, uploadImage);
 
 // Get all images for the authenticated user
 router.get('/', getUserImages);

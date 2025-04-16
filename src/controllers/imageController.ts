@@ -22,12 +22,13 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    if (!req.file) {
+    if (!req.files || !('image' in req.files)) {
       res.status(400).json({ message: 'No file uploaded' });
       return;
     }
 
-    const { originalname, buffer, mimetype, size } = req.file;
+    const file = (req.files as { [fieldname: string]: Express.Multer.File[] }).image[0];
+    const { originalname, buffer, mimetype, size } = file;
     const fileExtension = path.extname(originalname);
     const filename = `${uuidv4()}${fileExtension}`;
 
