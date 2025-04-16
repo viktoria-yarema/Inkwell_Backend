@@ -96,7 +96,6 @@ extensions/*
 .env.*
 .env
 
-# Specific JSON file
-*-service-account.json
-
 deploy.zip
+
+inkwell-447220-deed225c8072.json

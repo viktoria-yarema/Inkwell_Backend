@@ -4,12 +4,25 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import Image from '../models/Image';
-import { GOOGLE_STORAGE_BUCKET } from '../utils/env';
+import { GOOGLE_APPLICATION_CREDENTIALS, GOOGLE_STORAGE_BUCKET } from '../utils/env';
 import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 
 // Setup Google Cloud Storage
-const storage = new Storage();
-const bucketName = GOOGLE_STORAGE_BUCKET.split('/').pop() || 'inkwell_bucket';
+let storageOptions = {};
+
+
+if (GOOGLE_APPLICATION_CREDENTIALS) {
+  try {
+    const credentials = JSON.parse(GOOGLE_APPLICATION_CREDENTIALS);
+    storageOptions = { credentials };
+    console.log('Using explicit Google Cloud credentials');
+  } catch (error) {
+    console.error('Error parsing Google Cloud credentials:', error);
+  }
+}
+
+const storage = new Storage(storageOptions);
+const bucketName = GOOGLE_STORAGE_BUCKET.split('/').pop() || 'bucket';
 const bucket = storage.bucket(bucketName);
 
 // Upload image to Google Cloud Storage

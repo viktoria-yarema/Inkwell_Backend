@@ -10,3 +10,4 @@ export const PORT = process.env.PORT || '';
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '';
 export const JWT_REFRESH_EXPIRATION = process.env.JWT_REFRESH_EXPIRATION || '';
 export const GOOGLE_STORAGE_BUCKET = process.env.INKWELL_GOOGLE_STORAGE_BUCKET || '';
+export const GOOGLE_APPLICATION_CREDENTIALS = process.env.GOOGLE_APPLICATION_CREDENTIALS || '';
