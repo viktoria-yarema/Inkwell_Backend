@@ -9,7 +9,6 @@ import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 
 // Setup Google Cloud Storage
 const storage = new Storage();
-
 const bucketName = GOOGLE_STORAGE_BUCKET.split('/').pop() || 'inkwell_bucket';
 const bucket = storage.bucket(bucketName);
 
@@ -33,8 +32,11 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
     const fileExtension = path.extname(originalname);
     const filename = `${uuidv4()}${fileExtension}`;
 
+    // Create path with folders for authorId and articles
+    const filePath = `${authorId}/articles/${filename}`;
+
     // Create a new blob in the bucket
-    const blob = bucket.file(filename);
+    const blob = bucket.file(filePath);
     const blobStream = blob.createWriteStream({
       resumable: false,
       metadata: {
@@ -48,11 +50,8 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
     });
 
     blobStream.on('finish', async () => {
-      // Make the file public
-      await blob.makePublic();
-
       // Get the public URL
-      const publicUrl = `${GOOGLE_STORAGE_BUCKET}${filename}`;
+      const publicUrl = `${GOOGLE_STORAGE_BUCKET}/${authorId}/articles/${filename}`;
 
       // Save image metadata to database
       const newImage = new Image({
@@ -62,6 +61,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
         size,
         url: publicUrl,
         authorId,
+        filePath,
         articleId: req.body.articleId || undefined,
       });
 
@@ -121,7 +121,8 @@ export const deleteImage = async (req: Request, res: Response): Promise<void> =>
     }
 
     // Delete from Google Cloud Storage
-    const file = bucket.file(image.filename);
+    const filePath = `${authorId}/articles/${image.filename}`;
+    const file = bucket.file(filePath);
     await file.delete();
 
     // Delete from database
