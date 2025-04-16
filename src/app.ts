@@ -30,10 +30,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(express.json());
-app.use('*', bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(errorHandler);
+// Increase payload limits
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 app.use(limiter);
 
@@ -42,5 +42,8 @@ app.use('/api/', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/images', imageRoutes);
+
+// Error handler should be used after all routes
+app.use(errorHandler);
 
 app.listen(PORT, () => console.log('Server is running', PORT));

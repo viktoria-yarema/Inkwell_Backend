@@ -21,7 +21,6 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 1, // Allow only 1 file upload at a time
+    fileSize: 15 * 1024 * 1024, // 15MB limit
   },
-}).fields([{ name: 'image', maxCount: 1 }]);
+});
