@@ -22,12 +22,14 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    if (!req.file) {
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
       res.status(400).json({ message: 'No file uploaded' });
       return;
     }
 
-    const { originalname, buffer, mimetype, size } = req.file;
+    // Get the first file, regardless of field name
+    const file = req.files[0];
+    const { originalname, buffer, mimetype, size } = file;
     const fileExtension = path.extname(originalname);
     const filename = `${uuidv4()}${fileExtension}`;
 
