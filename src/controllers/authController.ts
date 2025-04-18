@@ -158,7 +158,7 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       sameSite: 'lax',
     });
 
