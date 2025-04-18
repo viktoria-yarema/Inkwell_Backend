@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
+
 import TokenBlacklist from '../models/TokenBlacklist';
 import User from '../models/User';
 import { AuthenticatedRequest } from '../types/auth';
@@ -85,8 +86,8 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     });
 
     res.status(201).json({ token });
@@ -122,8 +123,8 @@ export const refreshAccessToken = async (
 
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     });
 
     res.json({ token: newAccessToken });
@@ -157,8 +158,8 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: false,
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     });
 
     res.status(200).json({ message: 'Logged out successfully' });
