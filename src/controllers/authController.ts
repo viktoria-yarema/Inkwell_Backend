@@ -87,7 +87,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     res.status(201).json({ token });
@@ -124,7 +124,7 @@ export const refreshAccessToken = async (
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     res.json({ token: newAccessToken });
@@ -158,8 +158,8 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     res.status(200).json({ message: 'Logged out successfully' });
