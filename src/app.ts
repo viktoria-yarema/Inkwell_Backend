@@ -41,7 +41,7 @@ app.use('/api/', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/images', imageRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
 
 app.use(errorHandler);
 
