@@ -2,7 +2,6 @@ import express from 'express';
 import { check } from 'express-validator';
 
 import {
-  getUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -11,8 +10,6 @@ import {
 import auth from '../middlewares/auth';
 
 const router = express.Router();
-
-router.get('/user', auth, getUser);
 
 router.post(
   '/register-user',
@@ -32,7 +29,7 @@ router.post(
   loginUser
 );
 
-router.post('/refresh-token', auth, refreshAccessToken);
+router.post('/refresh-token', refreshAccessToken);
 
 router.post('/logout', auth, logoutUser);
 

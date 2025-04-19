@@ -168,19 +168,3 @@ export const logoutUser = async (req: AuthenticatedRequest, res: Response): Prom
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
-
-export const getUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const user = await User.findById(req.user?.id).select('-password');
-    const formattedUser = user?.toObject();
-
-    if (formattedUser) {
-      formattedUser.id = formattedUser._id;
-    }
-
-    res.json(formattedUser);
-  } catch (err: any) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-};
