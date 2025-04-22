@@ -44,7 +44,7 @@ router.put(
 
 router.delete('/:id', auth, deleteArticle);
 
-router.get('/lastArticles', [auth, query('limit').isInt({ min: 1 }).optional()], getLastArticles);
+router.get('/last', [auth, query('limit').isInt({ min: 1 }).optional()], getLastArticles);
 
 const articleRoutes = router;
 
