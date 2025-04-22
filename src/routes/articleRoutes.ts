@@ -6,6 +6,7 @@ import {
   deleteArticle,
   getArticleById,
   getArticles,
+  getLastArticles,
   updateArticle,
 } from '../controllers/articleController';
 import auth from '../middlewares/auth';
@@ -26,6 +27,7 @@ router.post(
     auth,
     check('title', 'Title is required').not().isEmpty().escape(),
     check('content', 'Content is required').not().isEmpty().escape(),
+    check('description', 'Description is required').not().isEmpty().escape(),
   ],
   createArticle
 );
@@ -41,6 +43,8 @@ router.put(
 );
 
 router.delete('/:id', auth, deleteArticle);
+
+router.get('/lastArticles', [auth, query('limit').isInt({ min: 1 }).optional()], getLastArticles);
 
 const articleRoutes = router;
 

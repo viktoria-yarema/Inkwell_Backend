@@ -8,6 +8,10 @@ const ArticleSchema = new Schema(
       type: String,
       required: true,
     },
+    description: {
+      type: String,
+      required: false,
+    },
     content: {
       type: String,
       required: true,
@@ -28,6 +32,14 @@ const ArticleSchema = new Schema(
         ref: 'Tag',
       },
     ],
+    coverImage: {
+      type: String,
+      required: true,
+    },
+    publishedAt: {
+      type: Date,
+      required: true,
+    },
   },
   {
     timestamps: true,
@@ -42,6 +54,9 @@ type Article = mongoose.Document & {
   tags: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
+  description: string;
+  coverImage: string;
+  publishedAt: Date;
 };
 
 const Article = mongoose.model<Article>('Article', ArticleSchema);

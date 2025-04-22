@@ -4,7 +4,6 @@ import { validationResult } from 'express-validator';
 import Article from '../models/Article';
 import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 
-// Create a new article
 export const createArticle = async (req: Request, res: Response): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -12,7 +11,7 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const { title, content, authorId, status, tags } = req.body;
+  const { title, content, authorId, status, tags, description, coverImage } = req.body;
 
   try {
     const newArticle = new Article({
@@ -21,6 +20,9 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
       authorId,
       status,
       tags,
+      publishedAt: new Date(),
+      description,
+      coverImage,
     });
 
     const article = await newArticle.save();
@@ -31,7 +33,6 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Get all articles
 export const getArticles = async (req: Request, res: Response): Promise<void> => {
   const authorId = getAuthorIdFromToken(req);
 
@@ -45,7 +46,6 @@ export const getArticles = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-// Get a single article by ID
 export const getArticleById = async (req: Request, res: Response): Promise<void> => {
   const authorId = getAuthorIdFromToken(req);
 
@@ -69,7 +69,6 @@ export const getArticleById = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Update an article
 export const updateArticle = async (req: Request, res: Response): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -77,7 +76,7 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const { title, content, status, tags } = req.body;
+  const { title, content, status, tags, coverImage, description } = req.body;
 
   try {
     let article = await Article.findById(req.params.id);
@@ -91,6 +90,9 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     article.content = content || article.content;
     article.status = status || article.status;
     article.tags = tags || article.tags;
+    article.coverImage = coverImage || article.coverImage;
+    article.description = description || article.description;
+    article.publishedAt = new Date();
 
     article = await article.save();
     res.json({ id: article._id, ...article });
@@ -100,7 +102,6 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Delete an article
 export const deleteArticle = async (req: Request, res: Response): Promise<void> => {
   try {
     const article = await Article.findById(req.params.id);
@@ -112,6 +113,25 @@ export const deleteArticle = async (req: Request, res: Response): Promise<void> 
 
     await article.deleteOne();
     res.status(200).json({ message: 'Article removed' });
+  } catch (err: any) {
+    console.error(err.message);
+    res.status(500).send({ message: 'Server error', error: err.message });
+  }
+};
+
+type GetLastArticlesQuery = {
+  limit?: number;
+};
+
+export const getLastArticles = async (
+  req: Request<{}, {}, {}, GetLastArticlesQuery>,
+  res: Response
+): Promise<void> => {
+  const limit = req.query.limit ? parseInt(req.query.limit.toString()) : 4;
+
+  try {
+    const articles = await Article.find().sort({ publishedAt: -1 }).limit(limit).lean();
+    res.json(articles.map(article => ({ id: article._id, ...article })));
   } catch (err: any) {
     console.error(err.message);
     res.status(500).send({ message: 'Server error', error: err.message });
