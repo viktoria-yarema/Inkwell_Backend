@@ -9,13 +9,8 @@ import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 let storageOptions = {};
 
 if (GOOGLE_APPLICATION_CREDENTIALS) {
-  try {
-    const credentials = JSON.parse(GOOGLE_APPLICATION_CREDENTIALS);
-    storageOptions = { credentials };
-    console.log('Using explicit Google Cloud credentials');
-  } catch (error) {
-    console.error('Error parsing Google Cloud credentials:', error);
-  }
+  storageOptions = { keyFilename: GOOGLE_APPLICATION_CREDENTIALS };
+  console.log('Using Google Cloud credentials from:', GOOGLE_APPLICATION_CREDENTIALS);
 }
 
 const storage = new Storage(storageOptions);
