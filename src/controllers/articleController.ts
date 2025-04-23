@@ -59,7 +59,7 @@ export const getArticles = async (
     const data = await findArticlesByAuthor(authorId, { page, limit });
 
     res.json({
-      articles: data.articles.map(article => ({ id: article._id, ...article.toObject() })),
+      articles: data.articles.map(article => ({ id: article._id, ...article })),
       meta: data.meta,
     });
   } catch (err: any) {

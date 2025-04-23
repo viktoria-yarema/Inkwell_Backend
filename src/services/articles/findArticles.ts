@@ -1,4 +1,4 @@
-import Article from '../../models/Article';
+import Article, { ArticleDoc } from '../../models/Article';
 
 export type GetArticlesQuery = {
   page: number;
@@ -6,12 +6,11 @@ export type GetArticlesQuery = {
 };
 
 export type GetArticlesResponse = {
-  articles: Article[];
+  articles: ArticleDoc[];
   meta: {
     total: number;
     page: number;
     totalPages: number;
-    hasNextPage: boolean;
   };
 };
 
@@ -24,7 +23,6 @@ export const findArticlesByAuthor = async (
   const total = await Article.countDocuments({ authorId });
 
   const totalPages = Math.ceil(total / limit);
-  const hasNextPage = page < totalPages;
 
   const items = await Article.find(filter)
     .sort({ updatedAt: -1 })
@@ -32,5 +30,5 @@ export const findArticlesByAuthor = async (
     .limit(limit)
     .lean();
 
-  return { articles: items, meta: { total, page, totalPages, hasNextPage } };
+  return { articles: items, meta: { total, page, totalPages } };
 };

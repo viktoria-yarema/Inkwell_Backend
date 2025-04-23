@@ -46,7 +46,7 @@ const ArticleSchema = new Schema(
   }
 );
 
-type Article = mongoose.Document & {
+export type ArticleDoc = mongoose.Document & {
   title: string;
   content: string;
   authorId: mongoose.Types.ObjectId;
@@ -59,6 +59,6 @@ type Article = mongoose.Document & {
   publishedAt: Date;
 };
 
-const Article = mongoose.model<Article>('Article', ArticleSchema);
+const Article = mongoose.model<ArticleDoc>('Article', ArticleSchema);
 
 export default Article;
