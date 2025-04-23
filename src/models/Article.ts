@@ -59,6 +59,4 @@ export type ArticleDoc = mongoose.Document & {
   publishedAt: Date;
 };
 
-const Article = mongoose.model<ArticleDoc>('Article', ArticleSchema);
-
-export default Article;
+export const Article = mongoose.model<ArticleDoc>('Article', ArticleSchema);

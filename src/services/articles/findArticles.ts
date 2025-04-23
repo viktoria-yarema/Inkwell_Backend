@@ -1,12 +1,26 @@
-import Article, { ArticleDoc } from '../../models/Article';
+import { Article } from '../../models/Article';
 
 export type GetArticlesQuery = {
   page: number;
   limit: number;
 };
 
+export type ArticleResponse = {
+  _id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  status: 'draft' | 'published';
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  description: string;
+  coverImage: string;
+  publishedAt: Date;
+};
+
 export type GetArticlesResponse = {
-  articles: ArticleDoc[];
+  articles: ArticleResponse[];
   meta: {
     total: number;
     page: number;
@@ -30,5 +44,19 @@ export const findArticlesByAuthor = async (
     .limit(limit)
     .lean();
 
-  return { articles: items, meta: { total, page, totalPages } };
+  const articles = items.map(item => ({
+    _id: item._id.toString(),
+    title: item.title,
+    content: item.content,
+    authorId: item.authorId.toString(),
+    status: item.status,
+    tags: item.tags.map(tag => tag.toString()),
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    description: item.description,
+    coverImage: item.coverImage,
+    publishedAt: item.publishedAt,
+  }));
+
+  return { articles, meta: { total, page, totalPages } };
 };

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 
-import Article from '../models/Article';
+import { Article } from '../models/Article';
 import {
   GetArticlesQuery,
   GetArticlesResponse,
@@ -57,11 +57,7 @@ export const getArticles = async (
     }
 
     const data = await findArticlesByAuthor(authorId, { page, limit });
-
-    res.json({
-      articles: data.articles.map(article => ({ id: article._id, ...article })),
-      meta: data.meta,
-    });
+    res.json(data);
   } catch (err: any) {
     next(err);
   }
