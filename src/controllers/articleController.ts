@@ -1,10 +1,19 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 
 import Article from '../models/Article';
+import {
+  GetArticlesQuery,
+  GetArticlesResponse,
+  findArticlesByAuthor,
+} from '../services/articles/findArticles';
 import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 
-export const createArticle = async (req: Request, res: Response): Promise<void> => {
+export const createArticle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -28,25 +37,41 @@ export const createArticle = async (req: Request, res: Response): Promise<void> 
     const article = await newArticle.save();
     res.json(article);
   } catch (err: any) {
-    console.error(err.message);
-    res.status(500).send({ message: 'Server error', error: err.message });
+    next(err);
   }
 };
 
-export const getArticles = async (req: Request, res: Response): Promise<void> => {
-  const authorId = getAuthorIdFromToken(req);
-
+export const getArticles = async (
+  req: Request<{}, {}, {}, GetArticlesQuery>,
+  res: Response<GetArticlesResponse | { message: string }>,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const articles = await Article.find({ authorId }).sort({ updatedAt: -1 }).lean();
+    const authorId = getAuthorIdFromToken(req);
+    const page = req.query.page ? parseInt(req.query.page.toString()) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit.toString()) : 10;
 
-    res.json(articles.map(article => ({ id: article._id, ...article })));
+    if (!authorId) {
+      res.status(401).json({ message: 'User is invalid' });
+      return;
+    }
+
+    const data = await findArticlesByAuthor(authorId, { page, limit });
+
+    res.json({
+      articles: data.articles.map(article => ({ id: article._id, ...article.toObject() })),
+      meta: data.meta,
+    });
   } catch (err: any) {
-    console.error(err.message);
-    res.status(500).send({ message: 'Server error', error: err.message });
+    next(err);
   }
 };
 
-export const getArticleById = async (req: Request, res: Response): Promise<void> => {
+export const getArticleById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const authorId = getAuthorIdFromToken(req);
 
   try {
@@ -65,11 +90,15 @@ export const getArticleById = async (req: Request, res: Response): Promise<void>
     res.json({ id: article._id, ...article });
   } catch (err: any) {
     console.error(err.message);
-    res.status(500).send({ message: 'Server error', error: err.message });
+    next(err);
   }
 };
 
-export const updateArticle = async (req: Request, res: Response): Promise<void> => {
+export const updateArticle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -97,12 +126,15 @@ export const updateArticle = async (req: Request, res: Response): Promise<void> 
     article = await article.save();
     res.json({ id: article._id, ...article });
   } catch (err: any) {
-    console.error(err.message);
-    res.status(500).send({ message: 'Server error', error: err.message });
+    next(err);
   }
 };
 
-export const deleteArticle = async (req: Request, res: Response): Promise<void> => {
+export const deleteArticle = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const article = await Article.findById(req.params.id);
 
@@ -114,8 +146,7 @@ export const deleteArticle = async (req: Request, res: Response): Promise<void> 
     await article.deleteOne();
     res.status(200).json({ message: 'Article removed' });
   } catch (err: any) {
-    console.error(err.message);
-    res.status(500).send({ message: 'Server error', error: err.message });
+    next(err);
   }
 };
 
@@ -125,7 +156,8 @@ type GetLastArticlesQuery = {
 
 export const getLastArticles = async (
   req: Request<{}, {}, {}, GetLastArticlesQuery>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const limit = req.query.limit ? parseInt(req.query.limit.toString()) : 4;
 
@@ -133,7 +165,6 @@ export const getLastArticles = async (
     const articles = await Article.find().sort({ publishedAt: -1 }).limit(limit).lean();
     res.json(articles.map(article => ({ id: article._id, ...article })));
   } catch (err: any) {
-    console.error(err.message);
-    res.status(500).send({ message: 'Server error', error: err.message });
+    next(err);
   }
 };
