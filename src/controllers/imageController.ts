@@ -46,7 +46,7 @@ export const uploadImage = async (
     const fileExtension = path.extname(originalname);
     const filename = `${uuidv4()}${fileExtension}`;
 
-    const filePath = `${authorId}/${dbPath}/${filename}`;
+    const filePath = `${authorId}/articles/${filename}`;
 
     const blob = bucket.file(filePath);
     const blobStream = blob.createWriteStream({
