@@ -1,5 +1,5 @@
 import { Storage } from '@google-cloud/storage';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,11 +17,22 @@ const storage = new Storage(storageOptions);
 const bucketName = GOOGLE_STORAGE_BUCKET.split('/').pop() || 'bucket';
 const bucket = storage.bucket(bucketName);
 
-export const uploadImage = async (req: Request, res: Response): Promise<void> => {
+export const uploadImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
+    const dbPath = req.params.path;
     const authorId = getAuthorIdFromToken(req);
+
     if (!authorId) {
       res.status(401).json({ message: 'Unauthorized: Invalid token' });
+      return;
+    }
+
+    if (!dbPath) {
+      res.status(400).json({ message: 'Cloud path is required' });
       return;
     }
 
@@ -35,7 +46,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
     const fileExtension = path.extname(originalname);
     const filename = `${uuidv4()}${fileExtension}`;
 
-    const filePath = `${authorId}/articles/${filename}`;
+    const filePath = `${authorId}/${dbPath}/${filename}`;
 
     const blob = bucket.file(filePath);
     const blobStream = blob.createWriteStream({
@@ -47,7 +58,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
 
     blobStream.on('error', err => {
       console.error('Upload error:', err);
-      res.status(500).json({ message: 'Upload failed', error: err.message });
+      next(err);
     });
 
     blobStream.on('finish', async () => {
@@ -59,6 +70,6 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
     blobStream.end(buffer);
   } catch (err: any) {
     console.error('Upload error:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    next(err);
   }
 };
