@@ -23,16 +23,10 @@ export const uploadImage = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const dbPath = req.params.path;
     const authorId = getAuthorIdFromToken(req);
 
     if (!authorId) {
       res.status(401).json({ message: 'Unauthorized: Invalid token' });
-      return;
-    }
-
-    if (!dbPath) {
-      res.status(400).json({ message: 'Cloud path is required' });
       return;
     }
 
