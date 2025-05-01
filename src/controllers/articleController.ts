@@ -20,7 +20,7 @@ export const createArticle = async (
     return;
   }
 
-  const { title, content, authorId, status, tags, description, coverImage } = req.body;
+  const { title, content, authorId, status, tags, coverImage } = req.body;
 
   try {
     const newArticle = new Article({
@@ -30,7 +30,6 @@ export const createArticle = async (
       status,
       tags,
       publishedAt: new Date(),
-      description,
       coverImage,
     });
 

@@ -14,7 +14,6 @@ export type ArticleResponse = {
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
-  description: string;
   coverImage: string;
   publishedAt: Date;
 };
@@ -53,7 +52,6 @@ export const findArticlesByAuthor = async (
     tags: item.tags.map(tag => tag.toString()),
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-    description: item.description,
     coverImage: item.coverImage,
     publishedAt: item.publishedAt,
   }));
