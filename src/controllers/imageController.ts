@@ -1,5 +1,6 @@
 import { Storage } from '@google-cloud/storage';
 import { NextFunction, Request, Response } from 'express';
+import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,8 +10,22 @@ import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 let storageOptions = {};
 
 if (GOOGLE_APPLICATION_CREDENTIALS) {
-  storageOptions = { keyFilename: GOOGLE_APPLICATION_CREDENTIALS };
-  console.log('Using Google Cloud credentials from:', GOOGLE_APPLICATION_CREDENTIALS);
+  try {
+    if (fs.existsSync(GOOGLE_APPLICATION_CREDENTIALS)) {
+      storageOptions = { keyFilename: GOOGLE_APPLICATION_CREDENTIALS };
+      console.log('Using Google Cloud credentials from file:', GOOGLE_APPLICATION_CREDENTIALS);
+    } else {
+      try {
+        const credentials = JSON.parse(GOOGLE_APPLICATION_CREDENTIALS);
+        storageOptions = { credentials };
+        console.log('Using Google Cloud credentials from environment variable JSON');
+      } catch (e) {
+        console.error('Invalid Google Cloud credentials format:', e);
+      }
+    }
+  } catch (err) {
+    console.error('Error setting up Google Cloud credentials:', err);
+  }
 }
 
 const storage = new Storage(storageOptions);
