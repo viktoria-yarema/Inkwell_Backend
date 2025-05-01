@@ -101,7 +101,7 @@ export const updateArticle = async (
     return;
   }
 
-  const { title, content, status, tags, coverImage, description } = req.body;
+  const { title, content, status, tags, coverImage } = req.body;
 
   try {
     let article = await Article.findById(req.params.id);
@@ -116,7 +116,6 @@ export const updateArticle = async (
     article.status = status || article.status;
     article.tags = tags || article.tags;
     article.coverImage = coverImage || article.coverImage;
-    article.description = description || article.description;
     article.publishedAt = new Date();
 
     article = await article.save();
