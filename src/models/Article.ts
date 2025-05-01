@@ -8,10 +8,6 @@ const ArticleSchema = new Schema(
       type: String,
       required: true,
     },
-    description: {
-      type: String,
-      required: false,
-    },
     content: {
       type: String,
       required: true,
@@ -54,7 +50,6 @@ export type ArticleDoc = mongoose.Document & {
   tags: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
-  description: string;
   coverImage: string;
   publishedAt: Date;
 };

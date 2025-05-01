@@ -29,7 +29,6 @@ router.post(
     auth,
     check('title', 'Title is required').not().isEmpty().escape(),
     check('content', 'Content is required').not().isEmpty().escape(),
-    check('description', 'Description is required').not().isEmpty().escape(),
   ],
   createArticle
 );
