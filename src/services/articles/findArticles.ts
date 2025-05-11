@@ -38,7 +38,7 @@ export const findArticlesByAuthor = async (
   const totalPages = Math.ceil(total / limit);
 
   const items = await Article.find(filter)
-    .sort({ updatedAt: -1 })
+    .sort({ publishedAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
     .lean();

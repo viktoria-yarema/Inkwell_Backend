@@ -15,13 +15,13 @@ const router = express.Router();
 
 router.get(
   '/',
-  [auth, query('page').isInt({ min: 1 }).optional(), query('limit').isInt({ min: 1 }).optional()],
+  [query('page').isInt({ min: 1 }).optional(), query('limit').isInt({ min: 1 }).optional()],
   getArticles
 );
 
-router.get('/last', [auth, query('limit').isInt({ min: 1 }).optional()], getLastArticles);
+router.get('/last', [query('limit').isInt({ min: 1 }).optional()], getLastArticles);
 
-router.get('/:id', [auth], getArticleById);
+router.get('/:id', getArticleById);
 
 router.post(
   '/',
