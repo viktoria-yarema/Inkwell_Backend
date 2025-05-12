@@ -3,21 +3,28 @@ name: Deploy to Railway
 on:
   push:
     branches:
-      - main 
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development 
+      name: development
       url: ${{ vars.BASE_URL }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Railway
-        uses: bervProject/railway-deploy@main
+      - name: Set up Node.js (if needed)
+        uses: actions/setup-node@v3
         with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service: ${{ secrets.RAILWAY_SERVICE_ID }}
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate Railway CLI
+        run: railway login --apiKey "$RAILWAY_TOKEN"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
