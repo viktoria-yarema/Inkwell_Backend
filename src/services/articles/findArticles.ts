@@ -6,7 +6,7 @@ export type GetArticlesQuery = {
 };
 
 export type ArticleResponse = {
-  _id: string;
+  id: string;
   title: string;
   content: string;
   authorId: string;
@@ -44,7 +44,7 @@ export const findArticlesByAuthor = async (
     .lean();
 
   const articles = items.map(item => ({
-    _id: item._id.toString(),
+    id: item._id.toString(),
     title: item.title,
     content: item.content,
     authorId: item.authorId.toString(),

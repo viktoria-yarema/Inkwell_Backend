@@ -6,7 +6,6 @@ import {
   deleteArticle,
   getArticleById,
   getArticles,
-  getLastArticles,
   updateArticle,
 } from '../controllers/articleController';
 import auth from '../middlewares/auth';
@@ -15,13 +14,10 @@ const router = express.Router();
 
 router.get(
   '/',
-  [query('page').isInt({ min: 1 }).optional(), query('limit').isInt({ min: 1 }).optional()],
+  [auth, query('page').isInt({ min: 1 }).optional(), query('limit').isInt({ min: 1 }).optional()],
   getArticles
 );
-
-router.get('/last', [query('limit').isInt({ min: 1 }).optional()], getLastArticles);
-
-router.get('/:id', getArticleById);
+router.get('/:id', [auth], getArticleById);
 
 router.post(
   '/',

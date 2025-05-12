@@ -143,22 +143,3 @@ export const deleteArticle = async (
     next(err);
   }
 };
-
-type GetLastArticlesQuery = {
-  limit?: number;
-};
-
-export const getLastArticles = async (
-  req: Request<{}, {}, {}, GetLastArticlesQuery>,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const limit = req.query.limit ? parseInt(req.query.limit.toString()) : 4;
-
-  try {
-    const articles = await Article.find().sort({ publishedAt: -1 }).limit(limit).lean();
-    res.json(articles.map(article => ({ id: article._id, ...article })));
-  } catch (err: any) {
-    next(err);
-  }
-};
