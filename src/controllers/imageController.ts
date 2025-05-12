@@ -73,6 +73,7 @@ export const uploadImage = async (
     blobStream.on('finish', async () => {
       res.status(200).json({
         message: 'Upload successful',
+        imageId: filename,
       });
     });
 
