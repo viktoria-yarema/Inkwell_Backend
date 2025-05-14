@@ -4,6 +4,7 @@ export type GetArticlesQuery = {
   page: number;
   limit: number;
   status?: string;
+  tag: string;
 };
 
 export type ArticleResponse = {
@@ -30,9 +31,9 @@ export type GetArticlesResponse = {
 
 export const findArticlesByAuthor = async (
   authorId: string,
-  { page, limit, status }: GetArticlesQuery
+  { page, limit, status, tag }: GetArticlesQuery
 ): Promise<GetArticlesResponse> => {
-  const filter = { authorId, status };
+  const filter = { authorId, status, tags: { $in: [tag] } };
 
   const total = await Article.countDocuments({ authorId });
 
@@ -42,7 +43,6 @@ export const findArticlesByAuthor = async (
     .sort({ publishedAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
-
     .lean();
 
   const articles = items.map(item => ({
