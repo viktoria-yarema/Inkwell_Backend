@@ -32,11 +32,17 @@ export const getArticles = async (req, res, next) => {
         const page = req.query.page ? parseInt(req.query.page.toString()) : 1;
         const limit = req.query.limit ? parseInt(req.query.limit.toString()) : 10;
         const status = req.query.status ? req.query.status.toString() : '';
+        const tag = req.query.tag ? req.query.tag.toString() : '';
         if (!authorId) {
             res.status(401).json({ message: 'User is invalid' });
             return;
         }
-        const data = await findArticlesByAuthor(authorId, { page, limit, status });
+        const data = await findArticlesByAuthor(authorId, {
+            page,
+            limit,
+            status,
+            tag,
+        });
         res.json(data);
     }
     catch (err) {
