@@ -13,12 +13,14 @@ NC='\033[0m' # No Color
 PROJECT_ID=${PROJECT_ID:-"inkwell-447220"}
 SERVICE_NAME=${SERVICE_NAME:-"inkwell-dev"}
 REGION=${REGION:-"europe-west10"}
-IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
+REPOSITORY=${REPOSITORY:-"inkwell-repo"}
+IMAGE_NAME="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE_NAME"
 
 echo -e "${YELLOW}Starting deployment process...${NC}"
 echo -e "${YELLOW}Project ID: ${PROJECT_ID}${NC}"
 echo -e "${YELLOW}Service Name: ${SERVICE_NAME}${NC}"
 echo -e "${YELLOW}Region: ${REGION}${NC}"
+echo -e "${YELLOW}Repository: ${REPOSITORY}${NC}"
 
 # Check current authentication
 CURRENT_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "none")
@@ -45,16 +47,23 @@ fi
 echo -e "${YELLOW}Setting Google Cloud project to ${PROJECT_ID}...${NC}"
 gcloud config set project ${PROJECT_ID}
 
-# Enable required APIs (requires user account or service account with proper permissions)
+# Enable required APIs
 echo -e "${YELLOW}Enabling required Google Cloud APIs...${NC}"
 gcloud services enable cloudbuild.googleapis.com --quiet
 gcloud services enable run.googleapis.com --quiet
-gcloud services enable containerregistry.googleapis.com --quiet
+gcloud services enable artifactregistry.googleapis.com --quiet
 gcloud services enable secretmanager.googleapis.com --quiet
 
-# Configure Docker for GCR
-echo -e "${YELLOW}Configuring Docker for Google Container Registry...${NC}"
-gcloud auth configure-docker --quiet
+# Create Artifact Registry repository if it doesn't exist
+echo -e "${YELLOW}Creating Artifact Registry repository (if needed)...${NC}"
+gcloud artifacts repositories create ${REPOSITORY} \
+    --repository-format=docker \
+    --location=${REGION} \
+    --project=${PROJECT_ID} 2>/dev/null || echo "Repository already exists or creation failed (this is ok if it exists)"
+
+# Configure Docker for Artifact Registry
+echo -e "${YELLOW}Configuring Docker for Artifact Registry...${NC}"
+gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
 # Build the Docker image for linux/amd64 platform (required for Cloud Run)
 echo -e "${YELLOW}Building Docker image for linux/amd64 platform...${NC}"
@@ -64,8 +73,8 @@ docker buildx build --platform linux/amd64 -t ${IMAGE_NAME}:latest .
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 docker tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${TIMESTAMP}
 
-# Push the image to Google Container Registry
-echo -e "${YELLOW}Pushing image to Google Container Registry...${NC}"
+# Push the image to Artifact Registry
+echo -e "${YELLOW}Pushing image to Artifact Registry...${NC}"
 docker push ${IMAGE_NAME}:latest
 docker push ${IMAGE_NAME}:${TIMESTAMP}
 
@@ -100,5 +109,5 @@ if curl -f -s "${SERVICE_URL}/health" > /dev/null; then
     echo -e "${GREEN}Health check passed!${NC}"
 else
     echo -e "${RED}Health check failed. Please check the logs.${NC}"
-    echo "View logs with: gcloud logs read --service=${SERVICE_NAME} --region=${REGION}"
+    echo "View logs with: gcloud logging read \"resource.type=cloud_run_revision AND resource.labels.service_name=${SERVICE_NAME}\" --limit=20 --project=${PROJECT_ID}"
 fi 

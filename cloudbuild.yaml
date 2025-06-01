@@ -5,18 +5,35 @@ steps:
       [
         'build',
         '-t',
-        'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA',
+        'europe-west10-docker.pkg.dev/$PROJECT_ID/inkwell-repo/inkwell-dev:$COMMIT_SHA',
         '-t',
-        'gcr.io/$PROJECT_ID/inkwell-dev:latest',
+        'europe-west10-docker.pkg.dev/$PROJECT_ID/inkwell-repo/inkwell-dev:latest',
         '.',
       ]
 
-  # Push the container image to Container Registry
+  # Create Artifact Registry repository (if it doesn't exist)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'artifacts',
+        'repositories',
+        'create',
+        'inkwell-repo',
+        '--repository-format=docker',
+        '--location=europe-west10',
+        '--project=$PROJECT_ID',
+      ]
+    # Allow this step to fail if repository already exists
+    id: 'create-repo'
+    allowFailure: true
+
+  # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA']
+    args: ['push', 'europe-west10-docker.pkg.dev/$PROJECT_ID/inkwell-repo/inkwell-dev:$COMMIT_SHA']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/inkwell-dev:latest']
+    args: ['push', 'europe-west10-docker.pkg.dev/$PROJECT_ID/inkwell-repo/inkwell-dev:latest']
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -27,7 +44,7 @@ steps:
         'deploy',
         'inkwell-dev',
         '--image',
-        'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA',
+        'europe-west10-docker.pkg.dev/$PROJECT_ID/inkwell-repo/inkwell-dev:$COMMIT_SHA',
         '--region',
         'europe-west10',
         '--platform',
@@ -61,10 +78,10 @@ steps:
         'INKWELL_GOOGLE_STORAGE_BUCKET=inkwell-storage-bucket:latest',
       ]
 
-# Store images in Google Container Registry
+# Store images in Artifact Registry
 images:
-  - 'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA'
-  - 'gcr.io/$PROJECT_ID/inkwell-dev:latest'
+  - 'europe-west10-docker.pkg.dev/$PROJECT_ID/inkwell-repo/inkwell-dev:$COMMIT_SHA'
+  - 'europe-west10-docker.pkg.dev/$PROJECT_ID/inkwell-repo/inkwell-dev:latest'
 
 # Build configuration
 options:
