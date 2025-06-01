@@ -1,0 +1,79 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA',
+        '-t',
+        'gcr.io/$PROJECT_ID/inkwell-dev:latest',
+        '.',
+      ]
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/inkwell-dev:latest']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run',
+        'deploy',
+        'inkwell-dev',
+        '--image',
+        'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA',
+        '--region',
+        'europe-west10',
+        '--platform',
+        'managed',
+        '--allow-unauthenticated',
+        '--memory',
+        '512Mi',
+        '--cpu',
+        '1000m',
+        '--max-instances',
+        '10',
+        '--min-instances',
+        '0',
+        '--port',
+        '8080',
+        '--timeout',
+        '300s',
+        '--concurrency',
+        '80',
+        '--set-env-vars',
+        'NODE_ENV=production',
+        '--set-secrets',
+        'JWT_SECRET=inkwell-jwt-secret:latest',
+        '--set-secrets',
+        'JWT_REFRESH_SECRET=inkwell-jwt-refresh-secret:latest',
+        '--set-secrets',
+        'DB_URI=inkwell-db-uri:latest',
+        '--set-secrets',
+        'SALT=inkwell-salt:latest',
+        '--set-secrets',
+        'INKWELL_GOOGLE_STORAGE_BUCKET=inkwell-storage-bucket:latest',
+      ]
+
+# Store images in Google Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/inkwell-dev:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/inkwell-dev:latest'
+
+# Build configuration
+options:
+  # Use high CPU machines for faster builds
+  machineType: 'E2_HIGHCPU_8'
+  # Use a larger disk for Docker builds
+  diskSizeGb: 100
+  # Enable logging
+  logging: CLOUD_LOGGING_ONLY
+
+# Build timeout (default is 10 minutes)
+timeout: '1200s'

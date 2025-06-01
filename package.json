@@ -10,6 +10,9 @@
     "build": "tsc && tsc-alias && node scripts/fix-imports.mjs",
     "start": "node build/app.js",
     "deploy": "npm run build && npm run start",
+    "deploy:gcp": "./scripts/deploy.sh",
+    "docker:build": "docker build -t inkwell-dev .",
+    "docker:run": "docker run -p 8080:8080 inkwell-dev",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "prepare": "husky"
