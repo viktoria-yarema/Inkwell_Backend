@@ -35,6 +35,9 @@ jobs:
       - name: Configure Docker to use gcloud as credential helper
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
+      - name: Show Docker auth config # debug, remove later
+        run: cat ~/.docker/config.json
+
       - name: Create Artifact Registry repository (if it doesn't exist)
         run: |
           gcloud artifacts repositories create $REPOSITORY \
@@ -51,6 +54,12 @@ jobs:
         run: |
           docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest
           docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA
+
+      - name: Refresh gcloud auth for Artifact Registry
+        run: |
+          gcloud auth print-access-token \
+            | docker login -u oauth2accesstoken --password-stdin \
+              https://europe-west10-docker.pkg.dev
 
       - name: Deploy to Cloud Run
         run: |
