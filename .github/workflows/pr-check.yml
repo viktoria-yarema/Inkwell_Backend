@@ -1,0 +1,132 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    name: Validate Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Check code formatting
+        run: yarn format:check
+
+      - name: Run ESLint
+        run: npx eslint src --ext .ts,.js --max-warnings 0
+
+      - name: Build application
+        run: yarn build
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "build/app.js" ]; then
+            echo "❌ Build failed: app.js not found"
+            exit 1
+          fi
+          echo "✅ Build successful: app.js exists"
+
+  docker-test:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for testing
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          tags: test-image:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          # Start container in background
+          docker run -d --name test-container -p 8080:8080 \
+            -e NODE_ENV=test \
+            -e JWT_SECRET=test-secret \
+            -e DB_URI=mongodb://localhost:27017/test \
+            test-image:latest
+
+          # Wait for container to start
+          sleep 10
+
+          # Check if container is running
+          if ! docker ps | grep test-container; then
+            echo "❌ Container failed to start"
+            docker logs test-container
+            exit 1
+          fi
+
+          # Test health endpoint (with retries)
+          for i in {1..5}; do
+            if curl -f http://localhost:8080/health; then
+              echo "✅ Health check passed"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "❌ Health check failed after 5 attempts"
+              docker logs test-container
+              exit 1
+            fi
+            sleep 5
+          done
+
+          # Cleanup
+          docker stop test-container
+          docker rm test-container
+
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [validate, docker-test]
+    if: always()
+
+    steps:
+      - name: PR Check Results
+        run: |
+          echo "## 🔍 Pull Request Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.validate.result }}" == "success" ]; then
+            echo "✅ **Code Quality**: All checks passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Code Quality**: Some checks failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.docker-test.result }}" == "success" ]; then
+            echo "✅ **Docker Build**: Container builds and runs successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Docker Build**: Container build or health check failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.validate.result }}" == "success" ] && [ "${{ needs.docker-test.result }}" == "success" ]; then
+            echo "🎉 This PR is ready to be merged! Once merged to main, it will automatically deploy to Cloud Run." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🔧 Please fix the failing checks before merging this PR." >> $GITHUB_STEP_SUMMARY
+          fi

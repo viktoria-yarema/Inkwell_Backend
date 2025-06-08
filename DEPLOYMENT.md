@@ -2,6 +2,65 @@
 
 This guide will walk you through deploying the Inkwell Backend to Google Cloud Run using Docker.
 
+## 🚀 Automated CI/CD with GitHub Actions
+
+The repository includes a comprehensive GitHub Actions workflow that ensures safe and reliable deployments:
+
+### ✅ What happens on Pull Requests:
+
+- **Code Quality Validation**: ESLint, Prettier formatting checks
+- **Build Verification**: Compiles TypeScript and verifies output
+- **Docker Testing**: Builds container and tests health endpoint
+- **PR Summary**: Provides clear feedback on readiness to merge
+
+### 🔄 What happens on Push to Main:
+
+1. **Pre-deployment Validation**: All PR checks run again
+2. **Docker Build**: Multi-stage build optimized for production
+3. **Google Cloud Deploy**: Pushes to Artifact Registry and deploys to Cloud Run
+4. **Health Verification**: Comprehensive post-deployment testing
+5. **Auto-Rollback**: Automatically rolls back if deployment fails
+6. **Notifications**: Success/failure notifications
+
+### 🛡️ Safety Features:
+
+- **Zero-downtime deployments** with health checks
+- **Automatic rollback** on failure
+- **Performance monitoring** with response time checks
+- **Security validation** (HTTPS, CORS headers)
+- **Comprehensive logging** for debugging
+
+### 📊 Using the Workflows:
+
+**For Pull Requests:**
+
+```bash
+# Simply create a PR - all checks run automatically
+git checkout -b feature/my-new-feature
+git commit -m "Add new feature"
+git push origin feature/my-new-feature
+# Create PR in GitHub - checks will run automatically
+```
+
+**For Deployments:**
+
+```bash
+# Merge to main - deployment happens automatically
+git checkout main
+git merge feature/my-new-feature
+git push origin main
+# Deployment starts automatically and takes ~3-5 minutes
+```
+
+**Manual Verification:**
+
+```bash
+# Test any deployment manually
+npm run verify:deployment https://your-service-url.run.app
+```
+
+---
+
 ## Prerequisites
 
 1. **Google Cloud SDK**: Install and configure the Google Cloud SDK

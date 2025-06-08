@@ -13,6 +13,11 @@
     "deploy:gcp": "./scripts/deploy.sh",
     "docker:build": "docker build -t inkwell-dev .",
     "docker:run": "docker run -p 8080:8080 inkwell-dev",
+    "lint": "eslint src --ext .ts,.js",
+    "lint:fix": "eslint src --ext .ts,.js --fix",
+    "test": "echo 'Running tests...' && npm run lint && npm run format:check && npm run build",
+    "test:ci": "npm run lint && npm run format:check && npm run build",
+    "verify:deployment": "./scripts/verify-deployment.sh",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "prepare": "husky"

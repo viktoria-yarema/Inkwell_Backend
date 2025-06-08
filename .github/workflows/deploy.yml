@@ -14,12 +14,112 @@ env:
   IMAGE_NAME: inkwell-dev
 
 jobs:
+  # Pre-deployment validation job
+  validate:
+    name: Validate Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Check code formatting
+        run: yarn format:check
+
+      - name: Run ESLint
+        run: npx eslint src --ext .ts,.js --max-warnings 0
+
+      - name: Build application
+        run: yarn build
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "build/app.js" ]; then
+            echo "❌ Build failed: app.js not found"
+            exit 1
+          fi
+          echo "✅ Build successful: app.js exists"
+
+  # Docker build and test job
+  docker-test:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for testing
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          tags: test-image:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          # Start container in background
+          docker run -d --name test-container -p 8080:8080 \
+            -e NODE_ENV=test \
+            -e JWT_SECRET=test-secret \
+            -e DB_URI=mongodb://localhost:27017/test \
+            test-image:latest
+
+          # Wait for container to start
+          sleep 10
+
+          # Check if container is running
+          if ! docker ps | grep test-container; then
+            echo "❌ Container failed to start"
+            docker logs test-container
+            exit 1
+          fi
+
+          # Test health endpoint (with retries)
+          for i in {1..5}; do
+            if curl -f http://localhost:8080/health; then
+              echo "✅ Health check passed"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "❌ Health check failed after 5 attempts"
+              docker logs test-container
+              exit 1
+            fi
+            sleep 5
+          done
+
+          # Cleanup
+          docker stop test-container
+          docker rm test-container
+
+  # Main deployment job
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
+    needs: [validate, docker-test]
 
     # Only deploy on pushes to main/master, not on PRs
     if: github.event_name == 'push'
+
+    outputs:
+      service-url: ${{ steps.deploy-service.outputs.service-url }}
 
     steps:
       - name: Checkout code
@@ -32,37 +132,38 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
+      - name: Verify GCP authentication
+        run: |
+          gcloud auth list
+          gcloud config get-value project
+
       - name: Configure Docker to use gcloud as credential helper
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-
-      - name: Show Docker auth config # debug, remove later
-        run: cat ~/.docker/config.json
 
       - name: Create Artifact Registry repository (if it doesn't exist)
         run: |
           gcloud artifacts repositories create $REPOSITORY \
             --repository-format=docker \
             --location=$REGION \
-            --project=$PROJECT_ID || true
+            --project=$PROJECT_ID || echo "Repository already exists"
 
-      - name: Build Docker image
+      - name: Build Docker image with proper tagging
         run: |
-          docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest .
-          docker tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA
+          # Build with commit SHA and latest tags
+          docker build --platform linux/amd64 \
+            -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest \
+            -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA \
+            .
 
       - name: Push to Artifact Registry
         run: |
           docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:latest
           docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA
 
-      - name: Refresh gcloud auth for Artifact Registry
-        run: |
-          gcloud auth print-access-token \
-            | docker login -u oauth2accesstoken --password-stdin \
-              https://europe-west10-docker.pkg.dev
-
       - name: Deploy to Cloud Run
+        id: deploy-service
         run: |
+          # Deploy with the specific SHA tag for better tracking
           gcloud run deploy $SERVICE_NAME \
             --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA \
             --platform managed \
@@ -76,10 +177,156 @@ jobs:
             --timeout 300s \
             --concurrency 80 \
             --service-account="inkwell-bucket@$PROJECT_ID.iam.gserviceaccount.com" \
+            --set-env-vars="NODE_ENV=production,GITHUB_SHA=$GITHUB_SHA" \
             --quiet
 
-      - name: Get service URL
+          # Get and output service URL
+          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$REGION --format="value(status.url)")
+          echo "service-url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "🚀 Service deployed at: $SERVICE_URL"
+
+  # Post-deployment verification job
+  verify-deployment:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Wait for service to be ready
+        run: sleep 30
+
+      - name: Comprehensive health check
+        run: |
+          SERVICE_URL="${{ needs.deploy.outputs.service-url }}"
+
+          echo "🔍 Testing service at: $SERVICE_URL"
+
+          # Test health endpoint with retries
+          for i in {1..10}; do
+            echo "Attempt $i/10: Testing health endpoint..."
+            
+            if curl -f -s --max-time 30 "$SERVICE_URL/health" | grep -q "healthy\|ok"; then
+              echo "✅ Health check passed on attempt $i"
+              HEALTH_SUCCESS=true
+              break
+            fi
+            
+            if [ $i -eq 10 ]; then
+              echo "❌ Health check failed after 10 attempts"
+              exit 1
+            fi
+            
+            sleep 10
+          done
+
+      - name: Performance and security check
+        run: |
+          SERVICE_URL="${{ needs.deploy.outputs.service-url }}"
+
+          # Test response time
+          echo "📊 Testing response time..."
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$SERVICE_URL/health")
+          echo "Response time: ${RESPONSE_TIME}s"
+
+          # Simple performance check without bc
+          if python3 -c "print(float('$RESPONSE_TIME') > 5.0)" 2>/dev/null | grep -q True; then
+            echo "⚠️ Warning: Response time is slow (${RESPONSE_TIME}s)"
+          else
+            echo "✅ Response time is acceptable (${RESPONSE_TIME}s)"
+          fi
+
+          # Test HTTPS
+          if [[ $SERVICE_URL == https://* ]]; then
+            echo "✅ HTTPS is properly configured"
+          else
+            echo "⚠️ Warning: Service is not using HTTPS"
+          fi
+
+      - name: Update deployment status
+        run: |
+          echo "✅ Deployment verification completed successfully"
+          echo "🌐 Service URL: ${{ needs.deploy.outputs.service-url }}"
+          echo "🔍 Health endpoint: ${{ needs.deploy.outputs.service-url }}/health"
+          echo "📝 Commit: $GITHUB_SHA"
+
+  # Rollback job (manual trigger or on failure)
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: [deploy, verify-deployment]
+    if: failure() && github.event_name == 'push'
+
+    steps:
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Get previous revision
+        id: get-previous
+        run: |
+          # Get the second most recent revision (previous working version)
+          PREVIOUS_REVISION=$(gcloud run revisions list \
+            --service=$SERVICE_NAME \
+            --region=$REGION \
+            --format="value(metadata.name)" \
+            --limit=2 | tail -n 1)
+
+          echo "previous-revision=$PREVIOUS_REVISION" >> $GITHUB_OUTPUT
+          echo "Previous revision: $PREVIOUS_REVISION"
+
+      - name: Rollback to previous version
+        if: steps.get-previous.outputs.previous-revision != ''
+        run: |
+          echo "🔄 Rolling back to previous revision: ${{ steps.get-previous.outputs.previous-revision }}"
+
+          gcloud run services update-traffic $SERVICE_NAME \
+            --region=$REGION \
+            --to-revisions=${{ steps.get-previous.outputs.previous-revision }}=100
+
+          echo "✅ Rollback completed"
+
+      - name: Verify rollback
+        if: steps.get-previous.outputs.previous-revision != ''
         run: |
           SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$REGION --format="value(status.url)")
-          echo "Service deployed at: $SERVICE_URL"
-          echo "Health check: $SERVICE_URL/health"
+
+          # Wait and test health after rollback
+          sleep 30
+          if curl -f -s "$SERVICE_URL/health"; then
+            echo "✅ Rollback verification successful"
+          else
+            echo "❌ Rollback verification failed"
+            exit 1
+          fi
+
+  # Notification job
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [deploy, verify-deployment]
+    if: always() && github.event_name == 'push'
+
+    steps:
+      - name: Deployment Success Notification
+        if: needs.verify-deployment.result == 'success'
+        run: |
+          echo "🎉 Deployment Successful!"
+          echo "Service: $SERVICE_NAME"
+          echo "Region: $REGION"
+          echo "URL: ${{ needs.deploy.outputs.service-url }}"
+          echo "Commit: $GITHUB_SHA"
+          echo "Author: ${{ github.actor }}"
+
+      - name: Deployment Failure Notification
+        if: needs.verify-deployment.result == 'failure' || needs.deploy.result == 'failure'
+        run: |
+          echo "💥 Deployment Failed!"
+          echo "Service: $SERVICE_NAME"
+          echo "Commit: $GITHUB_SHA"
+          echo "Author: ${{ github.actor }}"
+          echo "Check the logs for details."
+          exit 1
