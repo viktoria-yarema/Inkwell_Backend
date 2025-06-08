@@ -29,6 +29,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 app.use(limiter);
 app.use(express.static('public'));
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
 app.use('/api/', authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/tags', tagRoutes);
