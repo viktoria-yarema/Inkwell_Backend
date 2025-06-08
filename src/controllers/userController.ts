@@ -30,7 +30,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response): Prom
     return;
   }
 
-  const { firstName, lastName, phoneNumber, avatarUrl } = req.body;
+  const { firstName, lastName, phoneNumber, avatarUrl, email, pageContent } = req.body;
 
   try {
     const updateFields: {
@@ -38,12 +38,16 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response): Prom
       lastName?: string;
       phoneNumber?: string;
       avatarUrl?: string;
+      email?: string;
+      pageContent?: any;
     } = {};
 
     if (firstName !== undefined) updateFields.firstName = firstName;
     if (lastName !== undefined) updateFields.lastName = lastName;
     if (phoneNumber !== undefined) updateFields.phoneNumber = phoneNumber;
     if (avatarUrl !== undefined) updateFields.avatarUrl = avatarUrl;
+    if (email !== undefined) updateFields.email = email;
+    if (pageContent !== undefined) updateFields.pageContent = pageContent;
 
     const user = await User.findByIdAndUpdate(
       req.user?.id,
