@@ -72,7 +72,7 @@ const HomePageContentSchema = new Schema(
 
 const AboutPageContentSchema = new Schema(
   {
-    into: {
+    intro: {
       title: { type: String, required: true },
       content: { type: String, required: true },
     },
