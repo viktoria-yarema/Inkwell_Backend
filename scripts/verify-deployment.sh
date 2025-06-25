@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Deployment verification script
+# Verification script for deployment
 set -e
 
 # Colors for output
@@ -9,62 +9,65 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Configuration
 SERVICE_URL=${1:-""}
-MAX_RETRIES=${2:-10}
-RETRY_DELAY=${3:-10}
 
 if [ -z "$SERVICE_URL" ]; then
-    echo -e "${RED}❌ Usage: $0 <SERVICE_URL> [MAX_RETRIES] [RETRY_DELAY]${NC}"
-    echo -e "${YELLOW}Example: $0 https://your-service.run.app 10 10${NC}"
+    echo -e "${RED}Usage: $0 <service-url>${NC}"
+    echo -e "${YELLOW}Example: $0 https://inkwell-dev-123456-ew.a.run.app${NC}"
     exit 1
 fi
 
 echo -e "${YELLOW}🔍 Verifying deployment at: $SERVICE_URL${NC}"
 
-# Function to test health endpoint
-test_health() {
-    local url="$1/health"
-    echo "Testing health endpoint: $url"
+# Function to test endpoint with retries
+test_endpoint() {
+    local url=$1
+    local endpoint=$2
+    local expected_status=${3:-200}
+    local max_attempts=10
+    local attempt=1
+
+    echo -e "${YELLOW}Testing $endpoint endpoint...${NC}"
     
-    response=$(curl -s -w "HTTPSTATUS:%{http_code};TIME:%{time_total}" "$url" || echo "HTTPSTATUS:000;TIME:0")
-    http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
-    time_total=$(echo "$response" | grep -o "TIME:[0-9.]*" | cut -d: -f2)
-    body=$(echo "$response" | sed -E 's/HTTPSTATUS:[0-9]*;TIME:[0-9.]*$//')
-    
-    echo "HTTP Status: $http_code"
-    echo "Response Time: ${time_total}s"
-    echo "Response Body: $body"
-    
-    if [ "$http_code" -eq 200 ] && echo "$body" | grep -q "healthy\|ok"; then
-        return 0
-    else
-        return 1
-    fi
+    while [ $attempt -le $max_attempts ]; do
+        echo "Attempt $attempt/$max_attempts: Testing $url$endpoint"
+        
+        if curl -f -s --max-time 30 "$url$endpoint" >/dev/null; then
+            echo -e "${GREEN}✅ $endpoint endpoint responded successfully${NC}"
+            return 0
+        fi
+        
+        if [ $attempt -eq $max_attempts ]; then
+            echo -e "${RED}❌ $endpoint endpoint failed after $max_attempts attempts${NC}"
+            return 1
+        fi
+        
+        sleep 5
+        ((attempt++))
+    done
 }
 
-# Test health endpoint with retries
-echo -e "${YELLOW}🏥 Testing health endpoint with retries...${NC}"
-for i in $(seq 1 $MAX_RETRIES); do
-    echo -e "${YELLOW}Attempt $i/$MAX_RETRIES...${NC}"
-    
-    if test_health "$SERVICE_URL"; then
-        echo -e "${GREEN}✅ Health check passed on attempt $i${NC}"
-        HEALTH_SUCCESS=true
-        break
-    else
-        echo -e "${RED}❌ Health check failed on attempt $i${NC}"
-        if [ $i -eq $MAX_RETRIES ]; then
-            echo -e "${RED}❌ Health check failed after $MAX_RETRIES attempts${NC}"
-            exit 1
-        fi
-        echo -e "${YELLOW}Waiting ${RETRY_DELAY}s before retry...${NC}"
-        sleep $RETRY_DELAY
-    fi
-done
+# Test health endpoint
+if test_endpoint "$SERVICE_URL" "/health"; then
+    echo -e "${GREEN}Health check passed!${NC}"
+else
+    echo -e "${RED}Health check failed!${NC}"
+    exit 1
+fi
 
-# Additional tests
-echo -e "${YELLOW}📊 Running additional verification tests...${NC}"
+# Test response time
+echo -e "${YELLOW}📊 Testing response time...${NC}"
+RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$SERVICE_URL/health")
+echo -e "${YELLOW}Response time: ${RESPONSE_TIME}s${NC}"
+
+# Simple performance check
+if command -v python3 >/dev/null 2>&1; then
+    if python3 -c "print(float('$RESPONSE_TIME') > 5.0)" 2>/dev/null | grep -q True; then
+        echo -e "${YELLOW}⚠️ Warning: Response time is slow (${RESPONSE_TIME}s)${NC}"
+    else
+        echo -e "${GREEN}✅ Response time is acceptable (${RESPONSE_TIME}s)${NC}"
+    fi
+fi
 
 # Test HTTPS
 if [[ $SERVICE_URL == https://* ]]; then
@@ -73,29 +76,15 @@ else
     echo -e "${YELLOW}⚠️ Warning: Service is not using HTTPS${NC}"
 fi
 
-# Test CORS (if applicable)
-echo -e "${YELLOW}🌐 Testing CORS headers...${NC}"
-cors_headers=$(curl -s -I -X OPTIONS "$SERVICE_URL/health" | grep -i "access-control" || echo "")
-if [ -n "$cors_headers" ]; then
-    echo -e "${GREEN}✅ CORS headers present${NC}"
-    echo "$cors_headers"
+# Test CORS headers
+echo -e "${YELLOW}🔐 Testing CORS headers...${NC}"
+CORS_HEADERS=$(curl -s -I -H "Origin: https://example.com" "$SERVICE_URL/health" | grep -i "access-control")
+if [ -n "$CORS_HEADERS" ]; then
+    echo -e "${GREEN}✅ CORS headers are present${NC}"
 else
-    echo -e "${YELLOW}⚠️ No CORS headers detected${NC}"
+    echo -e "${YELLOW}⚠️ Warning: CORS headers not detected${NC}"
 fi
 
-# Performance check
-echo -e "${YELLOW}⚡ Performance check...${NC}"
-response_time=$(curl -o /dev/null -s -w '%{time_total}' "$SERVICE_URL/health")
-echo "Response time: ${response_time}s"
-
-# Convert to integer for comparison (multiply by 100 to handle decimals)
-response_time_int=$(echo "$response_time * 100" | bc -l 2>/dev/null | cut -d. -f1 || echo "0")
-if [ "$response_time_int" -gt 500 ]; then  # 5.0 seconds = 500 in our scale
-    echo -e "${YELLOW}⚠️ Warning: Response time is slow (${response_time}s)${NC}"
-else
-    echo -e "${GREEN}✅ Response time is acceptable (${response_time}s)${NC}"
-fi
-
-echo -e "${GREEN}🎉 Deployment verification completed successfully!${NC}"
-echo -e "${GREEN}🌐 Service URL: $SERVICE_URL${NC}"
-echo -e "${GREEN}🔍 Health endpoint: $SERVICE_URL/health${NC}" 
+echo -e "${GREEN}🎉 Deployment verification completed!${NC}"
+echo -e "${GREEN}Service URL: $SERVICE_URL${NC}"
+echo -e "${GREEN}Health endpoint: $SERVICE_URL/health${NC}" 

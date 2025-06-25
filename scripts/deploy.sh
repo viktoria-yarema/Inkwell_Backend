@@ -65,9 +65,13 @@ gcloud artifacts repositories create ${REPOSITORY} \
 echo -e "${YELLOW}Configuring Docker for Artifact Registry...${NC}"
 gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
+# Ensure Docker buildx is available and set up
+echo -e "${YELLOW}Setting up Docker buildx for multi-platform builds...${NC}"
+docker buildx create --name multiarch --driver docker-container --use 2>/dev/null || docker buildx use multiarch 2>/dev/null || echo "Using default buildx builder"
+
 # Build the Docker image for linux/amd64 platform (required for Cloud Run)
 echo -e "${YELLOW}Building Docker image for linux/amd64 platform...${NC}"
-docker buildx build --platform linux/amd64 -t ${IMAGE_NAME}:latest .
+docker buildx build --platform linux/amd64 --load -t ${IMAGE_NAME}:latest .
 
 # Tag with timestamp for versioning
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)

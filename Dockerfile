@@ -1,5 +1,5 @@
-# Use Node.js 18 as base image
-FROM node:18-alpine AS base
+# Use Node.js 18 as base image with explicit platform
+FROM --platform=linux/amd64 node:18-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY package*.json yarn.lock ./
 RUN yarn install --production --frozen-lockfile && yarn cache clean
 
 # Development stage
-FROM node:18-alpine AS build
+FROM --platform=linux/amd64 node:18-alpine AS build
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ COPY . .
 RUN yarn build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM --platform=linux/amd64 node:18-alpine AS production
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
