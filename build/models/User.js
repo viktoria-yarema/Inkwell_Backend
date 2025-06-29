@@ -1,6 +1,69 @@
 import bcrypt from 'bcrypt';
 import mongoose, { Schema } from 'mongoose';
 import { SALT } from '../utils/env.js';
+const ExperienceCardSchema = new Schema({
+    jobTitle: { type: String, required: true },
+    companyName: { type: String, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    description: { type: String, required: true },
+}, { _id: false });
+const EducationCardSchema = new Schema({
+    title: { type: String, required: true },
+    schoolName: { type: String, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    location: { type: String, required: true },
+}, { _id: false });
+const HomePageContentSchema = new Schema({
+    header: {
+        brandName: { type: String, required: true },
+        logoUrl: { type: String, required: true },
+    },
+    footer: {
+        description: { type: String, required: true },
+        copyright: { type: String, required: true },
+    },
+    hero: {
+        title: { type: String, required: true },
+        subtitle: { type: String, required: true },
+        imageUrl: { type: String, required: true },
+    },
+    latestArticles: {
+        title: { type: String, required: true },
+        subtitle: { type: String, required: true },
+    },
+    about: {
+        title: { type: String, required: true },
+        subtitle: { type: String, required: true },
+        imageUrl: { type: String, required: true },
+    },
+    categories: {
+        title: { type: String, required: true },
+        subtitle: { type: String, required: true },
+    },
+}, { _id: false });
+const AboutPageContentSchema = new Schema({
+    intro: {
+        title: { type: String, required: true },
+        content: { type: String, required: true },
+    },
+    professionalExperience: [ExperienceCardSchema],
+    philosophy: {
+        title: { type: String, required: true },
+        content: { type: String, required: true },
+    },
+    skills: [{ type: String }],
+    educations: [EducationCardSchema],
+}, { _id: false });
+const ArticlesPageContentSchema = new Schema({
+    title: { type: String, required: true },
+}, { _id: false });
+const PageContentSchema = new Schema({
+    home: HomePageContentSchema,
+    about: AboutPageContentSchema,
+    articles: ArticlesPageContentSchema,
+}, { _id: false });
 const UserSchema = new Schema({
     email: {
         type: String,
@@ -25,6 +88,15 @@ const UserSchema = new Schema({
     },
     avatarUrl: {
         type: String,
+        required: false,
+    },
+    role: {
+        type: String,
+        required: false,
+        default: 'user',
+    },
+    pageContent: {
+        type: PageContentSchema,
         required: false,
     },
 }, {

@@ -3,12 +3,15 @@ import { check } from 'express-validator';
 
 import { deleteUser, getUserById, updateUser } from '../controllers/userController';
 import auth from '../middlewares/auth';
+import { updatePageContent } from '../controllers/pageController';
 
 const router = express.Router();
 
 router.use(auth);
 
 router.get('/', getUserById);
+
+router.put('/page-content', updatePageContent);
 
 router.put(
   '/',

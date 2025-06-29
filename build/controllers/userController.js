@@ -22,7 +22,7 @@ export const updateUser = async (req, res) => {
         res.status(400).json({ errors: errors.array() });
         return;
     }
-    const { firstName, lastName, phoneNumber, avatarUrl } = req.body;
+    const { firstName, lastName, phoneNumber, avatarUrl, email, pageContent } = req.body;
     try {
         const updateFields = {};
         if (firstName !== undefined)
@@ -33,6 +33,10 @@ export const updateUser = async (req, res) => {
             updateFields.phoneNumber = phoneNumber;
         if (avatarUrl !== undefined)
             updateFields.avatarUrl = avatarUrl;
+        if (email !== undefined)
+            updateFields.email = email;
+        if (pageContent !== undefined)
+            updateFields.pageContent = pageContent;
         const user = await User.findByIdAndUpdate(req.user?.id, { $set: updateFields }, { new: true }).select('-password');
         if (!user) {
             res.status(404).json({ message: 'User not found' });

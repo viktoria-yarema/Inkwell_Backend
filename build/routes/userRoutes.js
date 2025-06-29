@@ -2,9 +2,11 @@ import express from 'express';
 import { check } from 'express-validator';
 import { deleteUser, getUserById, updateUser } from '../controllers/userController.js';
 import auth from '../middlewares/auth.js';
+import { updatePageContent } from '../controllers/pageController.js';
 const router = express.Router();
 router.use(auth);
 router.get('/', getUserById);
+router.put('/page-content', updatePageContent);
 router.put('/', [
     check('firstName', 'First name is optional').optional().escape(),
     check('lastName', 'Last name is optional').optional().escape(),
