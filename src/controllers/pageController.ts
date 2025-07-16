@@ -87,6 +87,7 @@ export const updatePageContent = async (
   }
 
   const validation = schema.safeParse(content);
+
   if (!validation.success) {
     return next(new ApiError(422, JSON.stringify(validation.error.flatten())));
   }
