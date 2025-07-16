@@ -20,18 +20,25 @@ async function addJsExtensions(directory) {
 }
 
 async function fixImports(content, currentFilePath) {
-  const importRegex = /(from\s+['"])(\.\.?\/[^'"]+)(?!\.js['"])/g;
-  const requireRegex = /(require\(['"])(\.\.?\/[^'"]+)(?!\.js['"])/g;
+  const importRegex = /(from\s+['"])(\.\.?\/[^'"]+)(?!\.js\.js['"]|\.js['"])/g;
+  const importStatementRegex = /(import\s+[^'"]*['"])(\.\.?\/[^'"]+)(?!\.js\.js['"]|\.js['"])/g;
+  const requireRegex = /(require\(['"])(\.\.?\/[^'"]+)(?!\.js\.js['"]|\.js['"])/g;
 
   let result = content;
 
-  // Handle ES6 imports
+  // Handle ES6 imports with "from"
   result = await replaceAsync(result, importRegex, async (match, prefix, importPath) => {
     const resolvedPath = await resolveImportPath(importPath, currentFilePath);
     return prefix + resolvedPath;
   });
 
-  // Handle CommonJS requires
+  // Handle ES6 import statements
+  result = await replaceAsync(result, importStatementRegex, async (match, prefix, importPath) => {
+    const resolvedPath = await resolveImportPath(importPath, currentFilePath);
+    return prefix + resolvedPath;
+  });
+
+  // Handle CommonJS requires (fallback for mixed environments)
   result = await replaceAsync(result, requireRegex, async (match, prefix, importPath) => {
     const resolvedPath = await resolveImportPath(importPath, currentFilePath);
     return prefix + resolvedPath;
@@ -41,6 +48,11 @@ async function fixImports(content, currentFilePath) {
 }
 
 async function resolveImportPath(importPath, currentFilePath) {
+  // If path already has .js extension, return as-is
+  if (importPath.endsWith('.js')) {
+    return importPath;
+  }
+  
   const currentDir = path.dirname(currentFilePath);
   const absoluteImportPath = path.resolve(currentDir, importPath);
 
@@ -53,7 +65,7 @@ async function resolveImportPath(importPath, currentFilePath) {
         await stat(indexPath);
         return importPath + '/index.js';
       } catch {
-        // index.js doesn't exist, try adding .js to the directory name
+        // index.js doesn't exist, it's a directory but no index.js
         return importPath + '.js';
       }
     }

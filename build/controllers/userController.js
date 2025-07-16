@@ -1,14 +1,8 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUser = exports.getUserById = void 0;
-const express_validator_1 = require("express-validator");
-const User_1 = __importDefault(require("../models/User.js"));
-const getUserById = async (req, res) => {
+import { validationResult } from 'express-validator';
+import User from '../models/User.js';
+export const getUserById = async (req, res) => {
     try {
-        const user = await User_1.default.findById(req.user?.id).select('-password');
+        const user = await User.findById(req.user?.id).select('-password');
         const formattedUser = user?.toObject();
         if (!formattedUser) {
             res.status(404).json({ message: 'User not found' });
@@ -22,9 +16,8 @@ const getUserById = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
-exports.getUserById = getUserById;
-const updateUser = async (req, res) => {
-    const errors = (0, express_validator_1.validationResult)(req);
+export const updateUser = async (req, res) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
@@ -44,7 +37,7 @@ const updateUser = async (req, res) => {
             updateFields.email = email;
         if (pageContent !== undefined)
             updateFields.pageContent = pageContent;
-        const user = await User_1.default.findByIdAndUpdate(req.user?.id, { $set: updateFields }, { new: true }).select('-password');
+        const user = await User.findByIdAndUpdate(req.user?.id, { $set: updateFields }, { new: true }).select('-password');
         if (!user) {
             res.status(404).json({ message: 'User not found' });
             return;
@@ -58,10 +51,9 @@ const updateUser = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
-exports.updateUser = updateUser;
-const deleteUser = async (req, res) => {
+export const deleteUser = async (req, res) => {
     try {
-        const user = await User_1.default.findByIdAndDelete(req.user?.id);
+        const user = await User.findByIdAndDelete(req.user?.id);
         if (!user) {
             res.status(404).json({ message: 'User not found' });
             return;
@@ -73,5 +65,4 @@ const deleteUser = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
-exports.deleteUser = deleteUser;
 //# sourceMappingURL=userController.js.map

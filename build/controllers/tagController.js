@@ -1,25 +1,19 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteTag = exports.updateTag = exports.getTagById = exports.getTags = exports.createTag = void 0;
-const express_validator_1 = require("express-validator");
-const Tags_1 = __importDefault(require("../models/Tags.js"));
-const createTag = async (req, res) => {
-    const errors = (0, express_validator_1.validationResult)(req);
+import { validationResult } from 'express-validator';
+import Tag from '../models/Tags.js';
+export const createTag = async (req, res) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
     }
     const { title, icon } = req.body;
     try {
-        const existingTag = await Tags_1.default.findOne({ title: title.toLowerCase() });
+        const existingTag = await Tag.findOne({ title: title.toLowerCase() });
         if (existingTag) {
             res.status(400).json({ message: 'Tag already exists' });
             return;
         }
-        const newTag = new Tags_1.default({
+        const newTag = new Tag({
             title: title.toLowerCase(),
             icon,
         });
@@ -31,10 +25,9 @@ const createTag = async (req, res) => {
         res.status(500).send({ message: 'Server error', error: err.message });
     }
 };
-exports.createTag = createTag;
-const getTags = async (_req, res) => {
+export const getTags = async (_req, res) => {
     try {
-        const tags = await Tags_1.default.find().sort({ title: 1 }).lean();
+        const tags = await Tag.find().sort({ title: 1 }).lean();
         res.json(tags.map(tag => ({ id: tag._id, ...tag })));
     }
     catch (err) {
@@ -42,10 +35,9 @@ const getTags = async (_req, res) => {
         res.status(500).send({ message: 'Server error', error: err.message });
     }
 };
-exports.getTags = getTags;
-const getTagById = async (req, res) => {
+export const getTagById = async (req, res) => {
     try {
-        const tag = await Tags_1.default.findById(req.params.id).lean();
+        const tag = await Tag.findById(req.params.id).lean();
         if (!tag) {
             res.status(404).json({ message: 'Tag not found' });
             return;
@@ -57,16 +49,15 @@ const getTagById = async (req, res) => {
         res.status(500).send({ message: 'Server error', error: err.message });
     }
 };
-exports.getTagById = getTagById;
-const updateTag = async (req, res) => {
-    const errors = (0, express_validator_1.validationResult)(req);
+export const updateTag = async (req, res) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
     }
     const { title, icon } = req.body;
     try {
-        const existingTag = await Tags_1.default.findOne({
+        const existingTag = await Tag.findOne({
             title: title.toLowerCase(),
             _id: { $ne: req.params.id },
         });
@@ -74,7 +65,7 @@ const updateTag = async (req, res) => {
             res.status(400).json({ message: 'Tag with this title already exists' });
             return;
         }
-        const tag = await Tags_1.default.findById(req.params.id);
+        const tag = await Tag.findById(req.params.id);
         if (!tag) {
             res.status(404).json({ message: 'Tag not found' });
             return;
@@ -93,10 +84,9 @@ const updateTag = async (req, res) => {
         res.status(500).send({ message: 'Server error', error: err.message });
     }
 };
-exports.updateTag = updateTag;
-const deleteTag = async (req, res) => {
+export const deleteTag = async (req, res) => {
     try {
-        const tag = await Tags_1.default.findById(req.params.id);
+        const tag = await Tag.findById(req.params.id);
         if (!tag) {
             res.status(404).json({ message: 'Tag not found' });
             return;
@@ -109,5 +99,4 @@ const deleteTag = async (req, res) => {
         res.status(500).send({ message: 'Server error', error: err.message });
     }
 };
-exports.deleteTag = deleteTag;
 //# sourceMappingURL=tagController.js.map

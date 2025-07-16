@@ -1,36 +1,30 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.logoutUser = exports.refreshAccessToken = exports.loginUser = exports.registerUser = void 0;
-const express_validator_1 = require("express-validator");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const TokenBlacklist_1 = __importDefault(require("../models/TokenBlacklist.js"));
-const User_1 = __importDefault(require("../models/User.js"));
-const env_1 = require("../utils/env.js");
+import { validationResult } from 'express-validator';
+import jwt from 'jsonwebtoken';
+import TokenBlacklist from '../models/TokenBlacklist.js';
+import User from '../models/User.js';
+import { JWT_EXPIRES_IN, JWT_REFRESH_EXPIRATION, JWT_REFRESH_SECRET, SERVER_SECRET, } from '../utils/env.js';
 const generateToken = (id) => {
-    const options = { expiresIn: Number(env_1.JWT_EXPIRES_IN) };
-    return jsonwebtoken_1.default.sign({ id }, env_1.SERVER_SECRET, options);
+    const options = { expiresIn: Number(JWT_EXPIRES_IN) };
+    return jwt.sign({ id }, SERVER_SECRET, options);
 };
 const generateRefreshToken = (id) => {
-    const options = { expiresIn: Number(env_1.JWT_REFRESH_EXPIRATION) };
-    return jsonwebtoken_1.default.sign({ id }, env_1.JWT_REFRESH_SECRET, options);
+    const options = { expiresIn: Number(JWT_REFRESH_EXPIRATION) };
+    return jwt.sign({ id }, JWT_REFRESH_SECRET, options);
 };
-const registerUser = async (req, res) => {
-    const errors = (0, express_validator_1.validationResult)(req);
+export const registerUser = async (req, res) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
     }
     const { email, password } = req.body;
     try {
-        let user = await User_1.default.findOne({ email });
+        let user = await User.findOne({ email });
         if (user) {
             res.status(400).json({ message: 'User already exists' });
             return;
         }
-        user = new User_1.default({
+        user = new User({
             email,
             password,
         });
@@ -44,16 +38,15 @@ const registerUser = async (req, res) => {
         res.status(500).send({ message: 'Server error while registration', error: err.message });
     }
 };
-exports.registerUser = registerUser;
-const loginUser = async (req, res) => {
-    const errors = (0, express_validator_1.validationResult)(req);
+export const loginUser = async (req, res) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
     }
     const { email, password } = req.body;
     try {
-        const user = await User_1.default.findOne({ email });
+        const user = await User.findOne({ email });
         if (!user) {
             res.status(400).json({ message: 'Invalid Credentials' });
             return;
@@ -77,16 +70,15 @@ const loginUser = async (req, res) => {
         res.status(500).send({ message: 'Server error', error: err.message });
     }
 };
-exports.loginUser = loginUser;
-const refreshAccessToken = async (req, res) => {
+export const refreshAccessToken = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
         res.status(403).json({ message: 'Refresh token required' });
         return;
     }
     try {
-        const decoded = jsonwebtoken_1.default.verify(refreshToken, env_1.JWT_REFRESH_SECRET);
-        const user = await User_1.default.findById(decoded.id);
+        const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+        const user = await User.findById(decoded.id);
         if (!user) {
             res.status(403).json({ message: 'Invalid refresh token' });
             return;
@@ -104,8 +96,7 @@ const refreshAccessToken = async (req, res) => {
         res.status(403).json({ message: 'Invalid refresh token' });
     }
 };
-exports.refreshAccessToken = refreshAccessToken;
-const logoutUser = async (req, res) => {
+export const logoutUser = async (req, res) => {
     try {
         const accessToken = req.header('Authorization')?.replace('Bearer ', '');
         const refreshToken = req.cookies.refreshToken;
@@ -117,12 +108,12 @@ const logoutUser = async (req, res) => {
             res.status(400).json({ message: 'Refresh token is required' });
             return;
         }
-        const decodedAccessToken = jsonwebtoken_1.default.verify(accessToken, env_1.SERVER_SECRET);
+        const decodedAccessToken = jwt.verify(accessToken, SERVER_SECRET);
         const accessTokenExpiresAt = new Date(decodedAccessToken.exp * 1000);
-        await new TokenBlacklist_1.default({ token: accessToken, expiresAt: accessTokenExpiresAt }).save();
-        const decodedRefreshToken = jsonwebtoken_1.default.verify(refreshToken, env_1.JWT_REFRESH_SECRET);
+        await new TokenBlacklist({ token: accessToken, expiresAt: accessTokenExpiresAt }).save();
+        const decodedRefreshToken = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
         const refreshTokenExpiresAt = new Date(decodedRefreshToken.exp * 1000);
-        await new TokenBlacklist_1.default({ token: refreshToken, expiresAt: refreshTokenExpiresAt }).save();
+        await new TokenBlacklist({ token: refreshToken, expiresAt: refreshTokenExpiresAt }).save();
         res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -135,5 +126,4 @@ const logoutUser = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
-exports.logoutUser = logoutUser;
 //# sourceMappingURL=authController.js.map

@@ -1,13 +1,8 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose_1 = __importDefault(require("mongoose"));
-const env_1 = require("../utils/env.js");
+import mongoose from 'mongoose';
+import { DB_URI } from '../utils/env.js';
 const connectDB = async () => {
     try {
-        await mongoose_1.default.connect(env_1.DB_URI);
+        await mongoose.connect(DB_URI);
         console.log('MongoDB Connected...');
     }
     catch (err) {
@@ -15,5 +10,5 @@ const connectDB = async () => {
         process.exit(1);
     }
 };
-exports.default = connectDB;
+export default connectDB;
 //# sourceMappingURL=db.js.map

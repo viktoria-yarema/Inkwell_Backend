@@ -1,11 +1,5 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Article = void 0;
-const mongoose_1 = __importDefault(require("mongoose"));
-const Schema = mongoose_1.default.Schema;
+import mongoose from 'mongoose';
+const Schema = mongoose.Schema;
 const ArticleSchema = new Schema({
     title: {
         type: String,
@@ -16,7 +10,7 @@ const ArticleSchema = new Schema({
         required: true,
     },
     authorId: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
@@ -27,7 +21,7 @@ const ArticleSchema = new Schema({
     },
     tags: [
         {
-            type: mongoose_1.default.Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
             ref: 'Tag',
         },
     ],
@@ -42,5 +36,5 @@ const ArticleSchema = new Schema({
 }, {
     timestamps: true,
 });
-exports.Article = mongoose_1.default.model('Article', ArticleSchema);
+export const Article = mongoose.model('Article', ArticleSchema);
 //# sourceMappingURL=Article.js.map

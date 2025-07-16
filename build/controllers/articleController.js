@@ -1,19 +1,16 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteArticle = exports.updateArticle = exports.getArticleById = exports.getArticles = exports.createArticle = void 0;
-const express_validator_1 = require("express-validator");
-const Article_1 = require("../models/Article.js");
-const findArticles_1 = require("../services/articles/findArticles.js");
-const getAuthorIdFromToken_1 = require("../utils/getAuthorIdFromToken.js");
-const createArticle = async (req, res, next) => {
-    const errors = (0, express_validator_1.validationResult)(req);
+import { validationResult } from 'express-validator';
+import { Article } from '../models/Article.js';
+import { findArticlesByAuthor } from '../services/articles/findArticles.js';
+import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken.js';
+export const createArticle = async (req, res, next) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
     }
     const { title, content, authorId, status, tags, coverImage } = req.body;
     try {
-        const newArticle = new Article_1.Article({
+        const newArticle = new Article({
             title,
             content,
             authorId,
@@ -29,10 +26,9 @@ const createArticle = async (req, res, next) => {
         next(err);
     }
 };
-exports.createArticle = createArticle;
-const getArticles = async (req, res, next) => {
+export const getArticles = async (req, res, next) => {
     try {
-        const authorId = (0, getAuthorIdFromToken_1.getAuthorIdFromToken)(req);
+        const authorId = getAuthorIdFromToken(req);
         const page = req.query.page ? parseInt(req.query.page.toString()) : 1;
         const limit = req.query.limit ? parseInt(req.query.limit.toString()) : 10;
         const status = req.query.status ? req.query.status.toString() : '';
@@ -41,7 +37,7 @@ const getArticles = async (req, res, next) => {
             res.status(401).json({ message: 'User is invalid' });
             return;
         }
-        const data = await (0, findArticles_1.findArticlesByAuthor)(authorId, {
+        const data = await findArticlesByAuthor(authorId, {
             page,
             limit,
             status,
@@ -53,11 +49,10 @@ const getArticles = async (req, res, next) => {
         next(err);
     }
 };
-exports.getArticles = getArticles;
-const getArticleById = async (req, res, next) => {
-    const authorId = (0, getAuthorIdFromToken_1.getAuthorIdFromToken)(req);
+export const getArticleById = async (req, res, next) => {
+    const authorId = getAuthorIdFromToken(req);
     try {
-        const article = await Article_1.Article.findById(req.params.id).lean();
+        const article = await Article.findById(req.params.id).lean();
         if (!article) {
             res.status(404).json({ message: 'Article not found' });
             return;
@@ -73,16 +68,15 @@ const getArticleById = async (req, res, next) => {
         next(err);
     }
 };
-exports.getArticleById = getArticleById;
-const updateArticle = async (req, res, next) => {
-    const errors = (0, express_validator_1.validationResult)(req);
+export const updateArticle = async (req, res, next) => {
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() });
         return;
     }
     const { title, content, status, tags, coverImage } = req.body;
     try {
-        let article = await Article_1.Article.findById(req.params.id);
+        let article = await Article.findById(req.params.id);
         if (!article) {
             res.status(404).json({ message: 'Article not found' });
             return;
@@ -100,10 +94,9 @@ const updateArticle = async (req, res, next) => {
         next(err);
     }
 };
-exports.updateArticle = updateArticle;
-const deleteArticle = async (req, res, next) => {
+export const deleteArticle = async (req, res, next) => {
     try {
-        const article = await Article_1.Article.findById(req.params.id);
+        const article = await Article.findById(req.params.id);
         if (!article) {
             res.status(404).json({ message: 'Article not found' });
             return;
@@ -115,5 +108,4 @@ const deleteArticle = async (req, res, next) => {
         next(err);
     }
 };
-exports.deleteArticle = deleteArticle;
 //# sourceMappingURL=articleController.js.map
