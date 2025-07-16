@@ -1,38 +1,44 @@
-import { z } from 'zod';
-import User from '../models/User.js';
-import { AboutSections, HomeSections, PageContentVariants } from '../types/page-content.js';
-import { educationSchema, introSchema, philosophySchema, professionalExperienceSchema, skillsSchema, } from '../validators/pageContent/about.js';
-import { articlesSchema } from '../validators/pageContent/articles.js';
-import { categoriesSchema, footerSchema, headerSchema, heroSchema, latestArticlesSchema, } from '../validators/pageContent/home.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updatePageContent = void 0;
+const zod_1 = require("zod");
+const User_1 = __importDefault(require("../models/User.js"));
+const page_content_1 = require("../types/page-content.js");
+const about_1 = require("../validators/pageContent/about/index.js");
+const articles_1 = require("../validators/pageContent/articles/index.js");
+const home_1 = require("../validators/pageContent/home/index.js");
 const validators = {
-    [PageContentVariants.HOME]: {
-        [HomeSections.HEADER]: headerSchema,
-        [HomeSections.FOOTER]: footerSchema,
-        [HomeSections.HERO]: heroSchema,
-        [HomeSections.LATEST_ARTICLES]: latestArticlesSchema,
-        [HomeSections.CATEGORIES]: categoriesSchema,
+    [page_content_1.PageContentVariants.HOME]: {
+        [page_content_1.HomeSections.HEADER]: home_1.headerSchema,
+        [page_content_1.HomeSections.FOOTER]: home_1.footerSchema,
+        [page_content_1.HomeSections.HERO]: home_1.heroSchema,
+        [page_content_1.HomeSections.LATEST_ARTICLES]: home_1.latestArticlesSchema,
+        [page_content_1.HomeSections.CATEGORIES]: home_1.categoriesSchema,
     },
-    [PageContentVariants.ABOUT]: {
-        [AboutSections.INTRO]: introSchema,
-        [AboutSections.PROFESSIONAL_EXPERIENCE]: professionalExperienceSchema,
-        [AboutSections.PHILOSOPHY]: philosophySchema,
-        [AboutSections.SKILLS]: skillsSchema,
-        [AboutSections.EDUCATIONS]: educationSchema,
+    [page_content_1.PageContentVariants.ABOUT]: {
+        [page_content_1.AboutSections.INTRO]: about_1.introSchema,
+        [page_content_1.AboutSections.PROFESSIONAL_EXPERIENCE]: about_1.professionalExperienceSchema,
+        [page_content_1.AboutSections.PHILOSOPHY]: about_1.philosophySchema,
+        [page_content_1.AboutSections.SKILLS]: about_1.skillsSchema,
+        [page_content_1.AboutSections.EDUCATIONS]: about_1.educationSchema,
     },
-    [PageContentVariants.ARTICLES]: {
-        default: articlesSchema,
+    [page_content_1.PageContentVariants.ARTICLES]: {
+        default: articles_1.articlesSchema,
     },
 };
-const updatePageContentSchema = z
+const updatePageContentSchema = zod_1.z
     .object({
-    pageVariant: z.nativeEnum(PageContentVariants),
-    section: z.string().optional(),
-    content: z.unknown(),
+    pageVariant: zod_1.z.nativeEnum(page_content_1.PageContentVariants),
+    section: zod_1.z.string().optional(),
+    content: zod_1.z.unknown(),
 })
     .superRefine((data, ctx) => {
-    if (data.pageVariant !== PageContentVariants.ARTICLES && !data.section) {
+    if (data.pageVariant !== page_content_1.PageContentVariants.ARTICLES && !data.section) {
         ctx.addIssue({
-            code: z.ZodIssueCode.custom,
+            code: zod_1.z.ZodIssueCode.custom,
             message: '`section` is required for this pageVariant',
         });
     }
@@ -43,7 +49,7 @@ class ApiError extends Error {
         this.status = status;
     }
 }
-export const updatePageContent = async (req, res, next) => {
+const updatePageContent = async (req, res, next) => {
     const parseResult = updatePageContentSchema.safeParse(req.body);
     if (!parseResult.success) {
         const { fieldErrors, formErrors } = parseResult.error.flatten();
@@ -51,7 +57,7 @@ export const updatePageContent = async (req, res, next) => {
     }
     const { pageVariant, section, content } = parseResult.data;
     const variantValidators = validators[pageVariant];
-    const schema = pageVariant === PageContentVariants.ARTICLES
+    const schema = pageVariant === page_content_1.PageContentVariants.ARTICLES
         ? variantValidators.default
         : variantValidators[section];
     if (!schema) {
@@ -63,7 +69,7 @@ export const updatePageContent = async (req, res, next) => {
     }
     const path = `pageContent.${pageVariant}${section ? `.${section}` : ''}`;
     try {
-        const user = await User.findByIdAndUpdate(req.user.id, { $set: { [path]: content } }, { new: true, runValidators: true })
+        const user = await User_1.default.findByIdAndUpdate(req.user.id, { $set: { [path]: content } }, { new: true, runValidators: true })
             .lean()
             .select('-password')
             .exec();
@@ -82,4 +88,5 @@ export const updatePageContent = async (req, res, next) => {
         }
     }
 };
+exports.updatePageContent = updatePageContent;
 //# sourceMappingURL=pageController.js.map

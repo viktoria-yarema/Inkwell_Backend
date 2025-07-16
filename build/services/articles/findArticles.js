@@ -1,5 +1,8 @@
-import { Article } from '../../models/Article.js';
-export const findArticlesByAuthor = async (authorId, { page = 1, limit = 10, status, tag }) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.findArticlesByAuthor = void 0;
+const Article_1 = require("../../models/Article.js");
+const findArticlesByAuthor = async (authorId, { page = 1, limit = 10, status, tag }) => {
     const filter = { authorId };
     if (status) {
         filter.status = status;
@@ -9,8 +12,8 @@ export const findArticlesByAuthor = async (authorId, { page = 1, limit = 10, sta
         filter.tags = { $in: tagsToSearch };
     }
     const [total, items] = await Promise.all([
-        Article.countDocuments(filter),
-        Article.find(filter)
+        Article_1.Article.countDocuments(filter),
+        Article_1.Article.find(filter)
             .sort({ publishedAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
@@ -34,4 +37,5 @@ export const findArticlesByAuthor = async (authorId, { page = 1, limit = 10, sta
         meta: { total, page, totalPages },
     };
 };
+exports.findArticlesByAuthor = findArticlesByAuthor;
 //# sourceMappingURL=findArticles.js.map

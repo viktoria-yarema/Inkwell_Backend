@@ -1,6 +1,12 @@
-import mongoose from 'mongoose';
-const Schema = mongoose.Schema;
-export var InkwellIcon;
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.InkwellIcon = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
+const Schema = mongoose_1.default.Schema;
+var InkwellIcon;
 (function (InkwellIcon) {
     InkwellIcon["BookOpen"] = "BookOpen";
     InkwellIcon["Pencil"] = "Pencil";
@@ -22,7 +28,7 @@ export var InkwellIcon;
     InkwellIcon["Clipboard"] = "Clipboard";
     InkwellIcon["Bell"] = "Bell";
     InkwellIcon["FileText"] = "FileText";
-})(InkwellIcon || (InkwellIcon = {}));
+})(InkwellIcon || (exports.InkwellIcon = InkwellIcon = {}));
 const TagSchema = new Schema({
     title: {
         type: String,
@@ -36,6 +42,6 @@ const TagSchema = new Schema({
 }, {
     timestamps: true,
 });
-const Tag = mongoose.model('Tag', TagSchema);
-export default Tag;
+const Tag = mongoose_1.default.model('Tag', TagSchema);
+exports.default = Tag;
 //# sourceMappingURL=Tags.js.map
