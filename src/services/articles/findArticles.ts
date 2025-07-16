@@ -2,6 +2,13 @@ import { FilterQuery } from 'mongoose';
 
 import { Article, ArticleDoc } from '../../models/Article';
 
+export type GetArticlesQueryRaw = {
+  page?: string;
+  limit?: string;
+  status?: string;
+  tag?: string;
+};
+
 export type GetArticlesQuery = {
   page: number;
   limit: number;

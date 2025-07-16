@@ -3,7 +3,6 @@ import { validationResult } from 'express-validator';
 
 import { Article } from '../models/Article';
 import {
-  GetArticlesQuery,
   GetArticlesResponse,
   findArticlesByAuthor,
 } from '../services/articles/findArticles';
@@ -41,7 +40,7 @@ export const createArticle = async (
 };
 
 export const getArticles = async (
-  req: Request<{}, {}, {}, GetArticlesQuery>,
+  req: Request,
   res: Response<GetArticlesResponse | { message: string }>,
   next: NextFunction
 ): Promise<void> => {
