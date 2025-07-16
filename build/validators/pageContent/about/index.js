@@ -23,4 +23,4 @@ export const educationSchema = z.array(z.object({
     endDate: z.date().optional(),
     location: z.string().min(1, 'Location is required'),
 }));
-//# sourceMappingURL=index.jsx.map
+//# sourceMappingURL=index.js.map

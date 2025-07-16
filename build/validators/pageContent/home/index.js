@@ -25,4 +25,4 @@ export const footerSchema = z.object({
     description: z.string().min(1, 'Description is required'),
     copyright: z.string().min(1, 'Copyright is required'),
 });
-//# sourceMappingURL=index.jsx.map
+//# sourceMappingURL=index.js.map
