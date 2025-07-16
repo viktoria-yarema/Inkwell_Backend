@@ -2,10 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 
 import { Article } from '../models/Article';
-import {
-  GetArticlesResponse,
-  findArticlesByAuthor,
-} from '../services/articles/findArticles';
+import { GetArticlesResponse, findArticlesByAuthor } from '../services/articles/findArticles';
 import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 
 export const createArticle = async (
