@@ -1,6 +1,6 @@
 import { validationResult } from 'express-validator';
 import { Article } from '../models/Article.js';
-import { findArticlesByAuthor, } from '../services/articles/findArticles.js';
+import { findArticlesByAuthor } from '../services/articles/findArticles.js';
 import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken.js';
 export const createArticle = async (req, res, next) => {
     const errors = validationResult(req);

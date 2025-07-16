@@ -1,8 +1,8 @@
 import express from 'express';
 import { check } from 'express-validator';
+import { updatePageContent } from '../controllers/pageController.js';
 import { deleteUser, getUserById, updateUser } from '../controllers/userController.js';
 import auth from '../middlewares/auth.js';
-import { updatePageContent } from '../controllers/pageController.js';
 const router = express.Router();
 router.use(auth);
 router.get('/', getUserById);

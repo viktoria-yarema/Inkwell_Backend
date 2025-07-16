@@ -65,7 +65,7 @@ export const updateTag = async (req, res) => {
             res.status(400).json({ message: 'Tag with this title already exists' });
             return;
         }
-        let tag = await Tag.findById(req.params.id);
+        const tag = await Tag.findById(req.params.id);
         if (!tag) {
             res.status(404).json({ message: 'Tag not found' });
             return;
