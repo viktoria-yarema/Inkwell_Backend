@@ -1,9 +1,9 @@
 import express from 'express';
 import { check } from 'express-validator';
 
+import { updatePageContent } from '../controllers/pageController';
 import { deleteUser, getUserById, updateUser } from '../controllers/userController';
 import auth from '../middlewares/auth';
-import { updatePageContent } from '../controllers/pageController';
 
 const router = express.Router();
 
