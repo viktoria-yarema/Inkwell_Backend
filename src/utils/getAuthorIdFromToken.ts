@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 import { SERVER_SECRET } from './env';
 
-export const getAuthorIdFromToken = (req: Request<{}, {}, {}, {}>): string | null => {
+export const getAuthorIdFromToken = (req: Request): string | null => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
