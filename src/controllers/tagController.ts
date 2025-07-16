@@ -79,7 +79,7 @@ export const updateTag = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    let tag = await Tag.findById(req.params.id);
+    const tag = await Tag.findById(req.params.id);
 
     if (!tag) {
       res.status(404).json({ message: 'Tag not found' });
