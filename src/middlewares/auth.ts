@@ -26,21 +26,41 @@ const auth = async (
       return;
     }
 
-    const decoded = jwt.verify(token, SERVER_SECRET) as { id: string };
+    let decoded: { id: string };
+
+    try {
+      decoded = jwt.verify(token, SERVER_SECRET) as { id: string };
+    } catch (jwtError: any) {
+      if (jwtError.name === 'TokenExpiredError') {
+        res.status(401).json({ message: 'Token has expired' });
+        return;
+      }
+      if (jwtError.name === 'JsonWebTokenError') {
+        res.status(401).json({ message: 'Token is malformed or invalid' });
+        return;
+      }
+      if (jwtError.name === 'NotBeforeError') {
+        res.status(401).json({ message: 'Token is not active yet' });
+        return;
+      }
+      // Handle any other JWT errors
+      res.status(401).json({ message: 'Token verification failed' });
+      return;
+    }
 
     req.user = { id: decoded.id };
 
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
-      res.status(401).json({ message: 'Token is not valid' });
+      res.status(401).json({ message: 'User not found' });
       return;
     }
 
     next();
   } catch (err) {
     console.error(err);
-    res.status(401).json({ message: 'Token is not valid' });
+    res.status(401).json({ message: 'Authorization is failed' });
   }
 };
 
