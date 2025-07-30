@@ -6,9 +6,9 @@ import auth from '../middlewares/auth';
 
 const router = express.Router();
 
-router.get('/', getTags);
+router.get('/', auth, getTags);
 
-router.get('/:id', getTagById);
+router.get('/:id', auth, getTagById);
 
 router.post(
   '/create',

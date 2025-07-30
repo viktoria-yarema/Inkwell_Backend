@@ -31,6 +31,11 @@ const TagSchema = new Schema(
       type: String,
       required: true,
     },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     icon: {
       type: String,
       enum: Object.values(InkwellIcon),

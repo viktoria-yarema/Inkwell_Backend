@@ -2,8 +2,16 @@ import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 
 import Tag from '../models/Tags';
+import { getAuthorIdFromToken } from '../utils/getAuthorIdFromToken';
 
 export const createTag = async (req: Request, res: Response): Promise<void> => {
+  const authorId = getAuthorIdFromToken(req);
+
+  if (!authorId) {
+    res.status(401).json({ message: 'User is invalid' });
+    return;
+  }
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -22,6 +30,7 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
     const newTag = new Tag({
       title: title.toLowerCase(),
       icon,
+      adminId: authorId,
     });
 
     const tag = await newTag.save();
@@ -32,8 +41,15 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getTags = async (_req: Request, res: Response): Promise<void> => {
+export const getTags = async (req: Request, res: Response): Promise<void> => {
   try {
+    const authorId = getAuthorIdFromToken(req);
+
+    if (!authorId) {
+      res.status(401).json({ message: 'User is invalid' });
+      return;
+    }
+
     const tags = await Tag.find().sort({ title: 1 }).lean();
 
     res.json(tags.map(tag => ({ id: tag._id, ...tag })));
@@ -60,7 +76,15 @@ export const getTagById = async (req: Request, res: Response): Promise<void> => 
 };
 
 export const updateTag = async (req: Request, res: Response): Promise<void> => {
+  const authorId = getAuthorIdFromToken(req);
+
+  if (!authorId) {
+    res.status(401).json({ message: 'User is invalid' });
+    return;
+  }
+
   const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
     return;
@@ -86,6 +110,13 @@ export const updateTag = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    if (tag.adminId.toString() !== authorId) {
+      res.status(403).json({ message: 'Not authorized to modify this tag' });
+      return;
+    }
+
+    tag.title = title.toLowerCase();
+
     if (icon) {
       tag.icon = icon;
     } else {
@@ -102,11 +133,24 @@ export const updateTag = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const deleteTag = async (req: Request, res: Response): Promise<void> => {
+  const authorId = getAuthorIdFromToken(req);
+
+  if (!authorId) {
+    res.status(401).json({ message: 'User is invalid' });
+    return;
+  }
+
   try {
     const tag = await Tag.findById(req.params.id);
 
     if (!tag) {
       res.status(404).json({ message: 'Tag not found' });
+      return;
+    }
+
+    // Check if the current user is the admin who created this tag
+    if (tag.adminId.toString() !== authorId) {
+      res.status(403).json({ message: 'Not authorized to delete this tag' });
       return;
     }
 

@@ -1,6 +1,8 @@
-const errorHandler = (err, req, res, next) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const errorHandler = (err, req, res, _next) => {
     console.error(err.stack);
-    res.status(500).send({
+    const status = err.status || 500;
+    res.status(status).send({
         status: 'error',
         message: err.message,
     });
