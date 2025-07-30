@@ -45,12 +45,7 @@ export const getTags = async (req: Request, res: Response): Promise<void> => {
   try {
     const authorId = getAuthorIdFromToken(req);
 
-    if (!authorId) {
-      res.status(401).json({ message: 'User is invalid' });
-      return;
-    }
-
-    const tags = await Tag.find().sort({ title: 1 }).lean();
+    const tags = await Tag.find({ adminId: authorId }).sort({ title: 1 }).lean();
 
     res.json(tags.map(tag => ({ id: tag._id, ...tag })));
   } catch (err: any) {
@@ -61,7 +56,9 @@ export const getTags = async (req: Request, res: Response): Promise<void> => {
 
 export const getTagById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const tag = await Tag.findById(req.params.id).lean();
+    const authorId = getAuthorIdFromToken(req);
+
+    const tag = await Tag.findOne({ _id: req.params.id, adminId: authorId }).lean();
 
     if (!tag) {
       res.status(404).json({ message: 'Tag not found' });
